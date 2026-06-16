@@ -29,48 +29,48 @@ interface IntelligenceAnswer {
 const incentivePool = {
   stage1: {
     10: [
-      "Dez perguntas e nem suou. Bora.",
-      "Já bateu dez. O ritmo ficou bom.",
-      "Primeiras dez no bolso. Segue.",
+      "Dez perguntas e nem deste por isso. Continua.",
+      "Já vais em dez. Bom ritmo.",
+      "Primeiras dez feitas. Segue.",
       "Dez respondidas, nada mal.",
-      "Olha você indo, dez já era."
+      "Vais bem, dez já lá vão."
     ],
     20: [
-      "Bateu vinte. Quase metade.",
-      "Você passou de vinte e ainda nem cansou.",
-      "Vinte feitas. A metade está chegando.",
+      "Já vais em vinte. Quase a meio.",
+      "Passaste das vinte e ainda nem cansaste.",
+      "Vinte feitas. O meio está a chegar.",
       "Vinte respondidas, o caminho começa a aparecer.",
-      "Vinte no placar. Continue."
+      "Vinte no marcador. Continua."
     ],
     30: [
-      "Trinta perguntas. Mais da metade feita.",
-      "Bateu trinta. A reta final já dá pra ver.",
-      "Trinta no acumulado. Você sabe o que faz.",
-      "Passou de trinta. A coisa anda.",
-      "Trinta. Faltam só dezessete."
+      "Trinta perguntas. Mais de metade feita.",
+      "Já vais em trinta. A reta final já se vê.",
+      "Trinta no total. Sabes o que fazes.",
+      "Passaste das trinta. Isto anda.",
+      "Trinta. Faltam só dezassete."
     ],
     40: [
-      "Quarenta. Sete pra terminar a primeira parte.",
-      "Bateu quarenta. A reta final começou.",
+      "Quarenta. Sete para terminar a primeira parte.",
+      "Já vais em quarenta. Começou a reta final.",
       "Quarenta respondidas. Quase lá.",
-      "Sete perguntas e essa parte acaba.",
-      "Quarenta. Já dá pra cheirar o fim da etapa."
+      "Sete perguntas e esta parte acaba.",
+      "Quarenta. O fim desta etapa está à vista."
     ]
   },
   stage2: {
     10: [
-      "Dez na segunda etapa. Já passou de um terço.",
-      "Bateu dez. Você não desistiu.",
+      "Dez na segunda etapa. Já passaste de um terço.",
+      "Já vais em dez. Não desististe.",
       "Dez perguntas na nova parte. Mantém o ritmo.",
       "Dez respondidas, faltam dezoito.",
       "Já são dez nesta etapa. Continua."
     ],
     20: [
       "Vinte. Faltam só oito.",
-      "Bateu vinte. A linha de chegada apareceu.",
-      "Vinte respondidas, oito separam você do fim.",
-      "Vinte feitas. Quase acabou.",
-      "Vinte. Reta final de verdade agora."
+      "Já vais em vinte. A meta apareceu.",
+      "Vinte respondidas, oito separam-te do fim.",
+      "Vinte feitas. Quase a acabar.",
+      "Vinte. Reta final a sério agora."
     ]
   }
 };
@@ -390,7 +390,7 @@ export default function Questionario() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
-        <p className="text-[#94A3B8]">Carregando...</p>
+        <p className="text-[#94A3B8]">A carregar...</p>
       </div>
     );
   }
@@ -399,7 +399,7 @@ export default function Questionario() {
     return (
       <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2BA88C] mb-4"></div>
-        <p className="text-white text-lg">Estamos calculando seus resultados...</p>
+        <p className="text-white text-lg">Estamos a calcular os teus resultados...</p>
       </div>
     );
   }
@@ -413,7 +413,7 @@ export default function Questionario() {
             onClick={() => navigate('/app')}
             className="px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors"
           >
-            Voltar para o painel
+            Voltar ao painel
           </button>
         </div>
       </div>
@@ -463,7 +463,7 @@ export default function Questionario() {
             onClick={handleBackToDashboard}
             className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
           >
-            Voltar para o painel
+            Voltar ao painel
           </button>
         </div>
       </header>
@@ -474,7 +474,7 @@ export default function Questionario() {
           <div className="bg-[#1E293B] rounded-xl p-8 max-w-md w-full">
             <h3 className="text-xl font-bold text-white mb-4">Sair da avaliação?</h3>
             <p className="text-[#F1F5F9] mb-6">
-              Suas respostas estão salvas. Você pode retomar de onde parou a qualquer momento.
+              As tuas respostas estão guardadas. Podes retomar de onde paraste quando quiseres.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -519,9 +519,9 @@ export default function Questionario() {
           {stage === 'intro1' && (
             <div className="flex items-center justify-center min-h-[70vh]">
               <div className="bg-[#1E293B] rounded-xl p-10 max-w-2xl w-full">
-                <h2 className="text-2xl font-bold text-white mb-6">Parte 1: Seus interesses</h2>
+                <h2 className="text-2xl font-bold text-white mb-6">Parte 1: Os teus interesses</h2>
                 <p className="text-base text-[#F1F5F9] leading-relaxed mb-6">
-                  Você verá 47 frases sobre atividades. Para cada uma, indique o quanto você gostaria de fazer aquela atividade. Não pense demais, sua primeira reação costuma ser a mais honesta.
+                  Vais ver 47 frases sobre atividades. Para cada uma, indica o quanto gostarias de fazer essa atividade. Não penses demasiado — a primeira reação costuma ser a mais sincera.
                 </p>
                 <button
                   onClick={() => setStage('stage1')}
@@ -587,9 +587,9 @@ export default function Questionario() {
           {stage === 'transition' && (
             <div className="flex items-center justify-center min-h-[70vh]">
               <div className="bg-[#1E293B] rounded-xl p-10 max-w-2xl w-full">
-                <h2 className="text-2xl font-bold text-white mb-6">Você concluiu a primeira parte</h2>
+                <h2 className="text-2xl font-bold text-white mb-6">Concluíste a primeira parte</h2>
                 <p className="text-base text-[#F1F5F9] leading-relaxed mb-6">
-                  Agora vamos avaliar suas habilidades. São 28 perguntas, em torno de 10 minutos.
+                  Agora vamos avaliar as tuas competências. São 28 perguntas, cerca de 10 minutos.
                 </p>
                 <button
                   onClick={() => setStage('stage2')}
@@ -655,9 +655,9 @@ export default function Questionario() {
           {stage === 'conclusion' && (
             <div className="flex items-center justify-center min-h-[70vh]">
               <div className="bg-[#1E293B] rounded-xl p-10 max-w-2xl w-full">
-                <h2 className="text-2xl font-bold text-white mb-6">Você concluiu sua avaliação</h2>
+                <h2 className="text-2xl font-bold text-white mb-6">Concluíste a tua avaliação</h2>
                 <p className="text-base text-[#F1F5F9] leading-relaxed mb-6">
-                  Suas respostas foram salvas. Agora vamos calcular seus resultados.
+                  As tuas respostas foram guardadas. Agora vamos calcular os teus resultados.
                 </p>
                 <button
                   onClick={handleComplete}
