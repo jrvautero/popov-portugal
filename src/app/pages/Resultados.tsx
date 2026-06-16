@@ -145,6 +145,25 @@ const INTEL_ICONS: Record<string, React.ElementType> = {
   "7": User,
 };
 
+const CCH_AREAS: Record<string, { nome: string; desc: string }> = {
+  CT: {
+    nome: "Ciências e Tecnologias",
+    desc: "Centrada em matemática, física e química, e biologia e geologia. Abre caminho para engenharias, saúde, ciências e tecnologia.",
+  },
+  CSE: {
+    nome: "Ciências Socioeconómicas",
+    desc: "Liga a matemática e a economia às ciências sociais. Abre caminho para economia, gestão, contabilidade e áreas afins.",
+  },
+  LH: {
+    nome: "Línguas e Humanidades",
+    desc: "Centrada em português, línguas, história, geografia e filosofia. Abre caminho para direito, comunicação, ensino, relações internacionais e ciências sociais.",
+  },
+  AV: {
+    nome: "Artes Visuais",
+    desc: "Centrada no desenho, na geometria descritiva e na expressão visual. Abre caminho para arquitetura, design, artes plásticas e áreas criativas.",
+  },
+};
+
 interface ResultData {
   session_id: string;
   riasec_scores: Record<string, number>;
@@ -154,6 +173,7 @@ interface ResultData {
   occupation_scores: Record<string, number>;
   cnaef_n1_scores: Record<string, number>;
   cnaef_n2_scores?: Record<string, number>;
+  cch_area_scores?: Record<string, number>;
   top3_areas: string[];
   generated_at: string;
   orientador_text?: string;
@@ -568,6 +588,101 @@ export default function Resultados() {
   const cnaefScoreValues = Object.values(cnaefN1Scores).map(Number);
   const maxAreaScore = cnaefScoreValues.length > 0 ? Math.max(...cnaefScoreValues) : 1;
 
+  // ─── Vista do 9.º ano (3.º ciclo): áreas do Secundário ───────────────────
+  // O backend só preenche cch_area_scores para alunos do 3.º ciclo.
+  const cch = result.cch_area_scores;
+  const isNinthYear = !!cch && Object.keys(cch).length > 0;
+
+  if (isNinthYear) {
+    const ordered = Object.entries(cch as Record<string, number>).sort(
+      (a, b) => b[1] - a[1]
+    );
+    return (
+      <div className="min-h-screen bg-[#0F172A]">
+        {/* Header */}
+        <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
+          <div className="h-full px-6 flex items-center justify-between">
+            <div className="text-2xl font-bold text-white">POPOV</div>
+            <div className="flex items-center gap-4">
+              <span className="text-[#94A3B8] text-sm">
+                {profile?.full_name || "Estudante"}
+              </span>
+              <a href="/app/perfil" className="text-white text-sm hover:underline">
+                O meu perfil
+              </a>
+              <button
+                onClick={handleRecalculate}
+                disabled={recalculating}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
+                title="Recalcular resultados com os dados mais recentes"
+              >
+                <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
+                {recalculating ? "A recalcular..." : "Recalcular"}
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
+              >
+                Sair
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-3xl mx-auto px-6 py-10 space-y-8">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-[#2BA88C] mb-2">
+              O teu próximo passo
+            </p>
+            <h1 className="text-3xl font-bold text-white mb-3">
+              Áreas do Secundário que mais combinam contigo
+            </h1>
+            <p className="text-[#94A3B8] leading-relaxed">
+              Estás no 9.º ano e a tua próxima escolha é a área do Secundário. Com
+              base nos teus interesses e competências, estas são as quatro áreas
+              ordenadas pela afinidade com o teu perfil. Não é uma decisão fechada —
+              é um ponto de partida informado.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {ordered.map(([code, score], i) => {
+              const meta = CCH_AREAS[code];
+              return (
+                <div
+                  key={code}
+                  className="bg-[#1E293B] rounded-xl p-6 border border-[#334155]"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-lg font-semibold text-white">
+                      {i + 1}. {meta?.nome ?? code}
+                    </h2>
+                    <span className="text-[#2BA88C] font-bold">{score}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-[#0F172A] rounded-full overflow-hidden mb-3">
+                    <div
+                      className="h-full bg-[#2BA88C]"
+                      style={{ width: `${score}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-[#94A3B8] leading-relaxed">
+                    {meta?.desc}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="text-xs text-[#94A3B8] leading-relaxed">
+            Estas áreas resultam do cruzamento entre as profissões com mais
+            afinidade contigo e as provas de ingresso e disciplinas que lhes dão
+            acesso no Secundário.
+          </p>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0F172A]">
       {/* Header */}
@@ -579,7 +694,7 @@ export default function Resultados() {
               {profile?.full_name || "Estudante"}
             </span>
             <a href="/app/perfil" className="text-white text-sm hover:underline">
-              Meu perfil
+              O meu perfil
             </a>
             {result && (
               <button
