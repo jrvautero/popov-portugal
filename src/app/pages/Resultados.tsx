@@ -174,6 +174,21 @@ interface ResultData {
   cnaef_n1_scores: Record<string, number>;
   cnaef_n2_scores?: Record<string, number>;
   cch_area_scores?: Record<string, number>;
+  cch_detailed?: Record<
+    string,
+    {
+      disciplinas: {
+        disciplina: string;
+        peso: number;
+        intel_cod: number | null;
+        intel_nome: string | null;
+        intel_score: number;
+        nivel: string | null;
+      }[];
+      cursos: { nome: string; afinidade: number }[];
+      profissoes: { esco: string; prof: string; mymentor: string | null; score: number }[];
+    }
+  >;
   top3_areas: string[];
   generated_at: string;
   orientador_text?: string;
@@ -594,9 +609,53 @@ export default function Resultados() {
   const isNinthYear = !!cch && Object.keys(cch).length > 0;
 
   if (isNinthYear) {
-    const ordered = Object.entries(cch as Record<string, number>).sort(
-      (a, b) => b[1] - a[1]
-    );
+    const cchScores = cch as Record<string, number>;
+    const ordered = Object.entries(cchScores).sort((a, b) => b[1] - a[1]);
+    const detailed = result.cch_detailed ?? {};
+
+    // Dados do radar (teia) — 4 áreas CCH
+    const radarData = ordered.map(([code, score]) => ({
+      area: CCH_AREAS[code]?.nome ?? code,
+      code,
+      value: score,
+    }));
+
+    // Alinhamento da inteligência: cor + rótulo
+    const nivelMeta: Record<string, { label: string; color: string }> = {
+      forte: { label: "perto", color: "#2BA88C" },
+      medio: { label: "intermédio", color: "#F59E0B" },
+      fraco: { label: "longe", color: "#EF4444" },
+    };
+
+    const renderCchTick = ({ x, y, payload }: { x: number; y: number; payload: { index: number } }) => {
+      const entry = radarData[payload.index];
+      if (!entry) return null;
+      const W = 120;
+      const H = 44;
+      return (
+        <foreignObject x={x - W / 2} y={y - H / 2} width={W} height={H} style={{ overflow: "visible" }}>
+          <div
+            style={{
+              backgroundColor: "#0F172A",
+              border: "1px solid #334155",
+              borderRadius: 6,
+              padding: "4px 6px",
+              textAlign: "center",
+              width: W,
+              boxSizing: "border-box",
+            }}
+          >
+            <p style={{ fontSize: 10, color: "#F1F5F9", lineHeight: 1.2, margin: 0, marginBottom: 2 }}>
+              {entry.area}
+            </p>
+            <p style={{ fontSize: 11, color: "#2BA88C", fontWeight: 700, margin: 0, lineHeight: 1 }}>
+              {entry.value}%
+            </p>
+          </div>
+        </foreignObject>
+      );
+    };
+
     return (
       <div className="min-h-screen bg-[#0F172A]">
         {/* Header */}
@@ -629,54 +688,284 @@ export default function Resultados() {
           </div>
         </header>
 
-        <main className="max-w-3xl mx-auto px-6 py-10 space-y-8">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-[#2BA88C] mb-2">
+        <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
+          {/* Hero */}
+          <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-8 space-y-2">
+            <p className="text-xs uppercase tracking-widest text-[#2BA88C] font-medium">
               O teu próximo passo
             </p>
-            <h1 className="text-3xl font-bold text-white mb-3">
-              Áreas do Secundário que mais combinam contigo
+            <h1 className="text-3xl font-bold tracking-tight text-[#F1F5F9]">
+              {CCH_AREAS[ordered[0][0]]?.nome ?? ordered[0][0]}
             </h1>
-            <p className="text-[#94A3B8] leading-relaxed">
-              Estás no 9.º ano e a tua próxima escolha é a área do Secundário. Com
-              base nos teus interesses e competências, estas são as quatro áreas
-              ordenadas pela afinidade com o teu perfil. Não é uma decisão fechada —
-              é um ponto de partida informado.
+            <p className="text-[#94A3B8] leading-relaxed pt-1">
+              Estás no 9.º ano e a tua próxima escolha é a área do Secundário. Com base
+              nos teus interesses e competências, estas são as quatro áreas dos Cursos
+              Científico-Humanísticos ordenadas pela afinidade com o teu perfil. Não é
+              uma decisão fechada — é um ponto de partida informado.
             </p>
-          </div>
+          </section>
 
-          <div className="space-y-4">
+          {/* Radar (teia) das áreas CCH */}
+          <section className="bg-[#1E293B] rounded-xl p-8">
+            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-1 flex flex-col gap-6">
+                <div className="rounded-lg p-6" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
+                  <h3 className="text-base font-bold text-[#F1F5F9] mb-3 uppercase tracking-wide">
+                    As tuas áreas
+                  </h3>
+                  <p className="text-sm text-[#94A3B8] leading-relaxed">
+                    Quanto mais longe do centro, maior a afinidade da área com o teu
+                    perfil. Em baixo vês cada área em detalhe: as disciplinas que a
+                    definem, os cursos a que dá acesso e as profissões mais próximas.
+                  </p>
+                </div>
+                <div className="rounded-lg p-6" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
+                  <h4 className="text-xs uppercase tracking-wider text-[#2BA88C] font-semibold mb-4">
+                    Ordenadas por afinidade
+                  </h4>
+                  <div className="space-y-2">
+                    {ordered.map(([code, score]) => (
+                      <div
+                        key={code}
+                        className="bg-[#0F172A] border border-[#334155] rounded-lg p-3 flex items-center gap-3"
+                      >
+                        <BookOpenCheck className="w-5 h-5 text-[#94A3B8] shrink-0" />
+                        <span className="text-sm text-[#F1F5F9] leading-tight flex-1">
+                          {CCH_AREAS[code]?.nome ?? code}
+                        </span>
+                        <span className="text-base text-[#2BA88C] font-bold tabular-nums shrink-0">
+                          {score}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-2">
+                <ResponsiveContainer width="100%" height={460}>
+                  <RadarChart data={radarData} outerRadius="72%" margin={{ top: 50, right: 90, bottom: 50, left: 90 }}>
+                    <PolarGrid stroke="#334155" />
+                    <PolarAngleAxis dataKey="area" tick={renderCchTick as any} />
+                    <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
+                    <Radar
+                      name="Afinidade"
+                      dataKey="value"
+                      stroke="#2BA88C"
+                      strokeWidth={2}
+                      fill="rgba(43, 168, 140, 0.35)"
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#0F172A",
+                        border: "1px solid #334155",
+                        borderRadius: "8px",
+                        fontSize: 12,
+                        color: "#F1F5F9",
+                      }}
+                      formatter={(value: number, _n: string, props: any) => [`${value}%`, props.payload?.area ?? "Área"]}
+                      labelFormatter={() => ""}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </section>
+
+          {/* Detalhe por área */}
+          <section className="space-y-6">
             {ordered.map(([code, score], i) => {
               const meta = CCH_AREAS[code];
+              const det = detailed[code];
+              const disciplinas = det?.disciplinas ?? [];
+              const cursos = det?.cursos ?? [];
+              const profissoes = det?.profissoes ?? [];
+              const isTop = i === 0;
               return (
                 <div
                   key={code}
-                  className="bg-[#1E293B] rounded-xl p-6 border border-[#334155]"
+                  className="rounded-xl overflow-hidden"
+                  style={{
+                    backgroundColor: isTop ? "rgba(43,168,140,0.08)" : "#1E293B",
+                    border: isTop ? "1px solid #2BA88C" : "1px solid #334155",
+                  }}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-lg font-semibold text-white">
-                      {i + 1}. {meta?.nome ?? code}
-                    </h2>
-                    <span className="text-[#2BA88C] font-bold">{score}%</span>
+                  <div className="p-6 lg:p-8">
+                    {/* Cabeçalho da área */}
+                    <div className="flex items-center gap-3 mb-2">
+                      <BookOpenCheck style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
+                      <h2 className="text-xl font-bold text-[#F1F5F9]">
+                        {i + 1}. {meta?.nome ?? code}
+                      </h2>
+                      <span className="ml-auto text-lg font-bold tabular-nums" style={{ color: "#2BA88C" }}>
+                        {score}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 bg-[#0F172A] rounded-full overflow-hidden mb-4">
+                      <div className="h-full bg-[#2BA88C]" style={{ width: `${score}%` }} />
+                    </div>
+                    <p className="text-sm text-[#94A3B8] leading-relaxed mb-6">{meta?.desc}</p>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                      {/* Disciplinas + alinhamento de inteligência */}
+                      <div className="rounded-lg p-5" style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <BookText style={{ width: 18, height: 18, color: "#2BA88C", flexShrink: 0 }} />
+                          <span className="text-sm uppercase tracking-wider font-semibold text-[#F1F5F9]">
+                            Disciplinas
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#94A3B8] mb-3">
+                          Alinhamento entre cada disciplina e o teu perfil de inteligências.
+                        </p>
+                        {disciplinas.length === 0 ? (
+                          <p className="text-sm text-[#94A3B8]">Sem dados.</p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {disciplinas.map((d) => {
+                              const nm = d.nivel ? nivelMeta[d.nivel] : null;
+                              return (
+                                <li key={d.disciplina} className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <span className="block text-sm text-[#F1F5F9] leading-tight truncate">
+                                      {d.disciplina}
+                                    </span>
+                                    {d.intel_nome && (
+                                      <span className="block text-xs text-[#94A3B8] leading-tight">
+                                        {d.intel_nome}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {nm ? (
+                                    <span
+                                      className="text-xs font-semibold shrink-0 px-2 py-0.5 rounded-full"
+                                      style={{ color: nm.color, backgroundColor: `${nm.color}22` }}
+                                      title={`${d.intel_score}%`}
+                                    >
+                                      {nm.label} · {d.intel_score}%
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-[#94A3B8] shrink-0">—</span>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+
+                      {/* Cursos */}
+                      <div className="rounded-lg p-5" style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <GraduationCap style={{ width: 18, height: 18, color: "#2BA88C", flexShrink: 0 }} />
+                          <span className="text-sm uppercase tracking-wider font-semibold text-[#F1F5F9]">
+                            Cursos que combinam
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#94A3B8] mb-3">
+                          Cursos do Superior a que esta área dá acesso e que mais combinam contigo.
+                        </p>
+                        {cursos.length === 0 ? (
+                          <p className="text-sm text-[#94A3B8]">Sem dados.</p>
+                        ) : (
+                          <ul className="space-y-1.5">
+                            {cursos.map((c, ci) => (
+                              <li key={ci} className="text-sm text-[#F1F5F9] leading-snug">
+                                · {c.nome}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      {/* Profissões */}
+                      <div className="rounded-lg p-5" style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Briefcase style={{ width: 18, height: 18, color: "#2BA88C", flexShrink: 0 }} />
+                          <span className="text-sm uppercase tracking-wider font-semibold text-[#F1F5F9]">
+                            Profissões próximas
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#94A3B8] mb-3">
+                          Profissões com mais afinidade contigo nesta área. Clica para saberes mais.
+                        </p>
+                        {profissoes.length === 0 ? (
+                          <p className="text-sm text-[#94A3B8]">Sem dados.</p>
+                        ) : (
+                          <ul className="space-y-2">
+                            {profissoes.map((p) => {
+                              const url = buildMymentorUrl(p.mymentor);
+                              return (
+                                <li key={p.esco} className="flex items-center justify-between gap-2">
+                                  {url ? (
+                                    <a
+                                      href={url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="group inline-flex items-center gap-1 text-sm text-[#F1F5F9] hover:text-[#2BA88C] hover:underline transition-colors min-w-0 flex-1"
+                                    >
+                                      <span className="truncate">{p.prof}</span>
+                                      <ExternalLink
+                                        style={{ width: 12, height: 12, color: "#2BA88C", flexShrink: 0 }}
+                                      />
+                                    </a>
+                                  ) : (
+                                    <span className="text-sm text-[#F1F5F9] truncate flex-1">{p.prof}</span>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-full h-2 bg-[#0F172A] rounded-full overflow-hidden mb-3">
-                    <div
-                      className="h-full bg-[#2BA88C]"
-                      style={{ width: `${score}%` }}
-                    />
-                  </div>
-                  <p className="text-sm text-[#94A3B8] leading-relaxed">
-                    {meta?.desc}
-                  </p>
                 </div>
               );
             })}
-          </div>
+          </section>
+
+          {/* A tua recomendação */}
+          <section className="bg-[#1E293B] rounded-xl overflow-hidden">
+            <div className="h-1.5 bg-[#2BA88C]" />
+            <div className="p-8">
+              <div className="flex items-center gap-3 mb-3">
+                <Star style={{ width: 32, height: 32, color: "#2BA88C", flexShrink: 0 }} />
+                <h2 className="text-2xl font-bold text-[#F1F5F9]">A tua recomendação</h2>
+              </div>
+              <p className="text-base text-[#94A3B8] mb-8">
+                Análise personalizada sobre a escolha da tua área do Secundário.
+              </p>
+
+              {loadingOrientador && (
+                <div className="flex items-center gap-3 py-8">
+                  <Loader2 style={{ width: 32, height: 32, color: "#2BA88C" }} className="animate-spin" />
+                  <span className="text-sm text-[#94A3B8]">A gerar análise personalizada...</span>
+                </div>
+              )}
+
+              {errorOrientador && !loadingOrientador && (
+                <div className="flex items-center gap-3 py-4">
+                  <AlertCircle style={{ width: 24, height: 24, color: "#EF4444", flexShrink: 0 }} />
+                  <span className="text-sm text-[#94A3B8]">{errorOrientador}</span>
+                </div>
+              )}
+
+              {orientadorText && !loadingOrientador && (
+                <div className="max-w-4xl">
+                  {orientadorText.split("\n\n").map((para, idx) => (
+                    <p key={idx} className="text-base text-[#F1F5F9] leading-relaxed mb-4">
+                      {para}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
 
           <p className="text-xs text-[#94A3B8] leading-relaxed">
-            Estas áreas resultam do cruzamento entre as profissões com mais
-            afinidade contigo e as provas de ingresso e disciplinas que lhes dão
-            acesso no Secundário.
+            Estas áreas resultam do cruzamento entre as profissões com mais afinidade
+            contigo e as provas de ingresso e disciplinas que lhes dão acesso no Secundário.
           </p>
         </main>
       </div>
