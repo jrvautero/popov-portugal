@@ -27,7 +27,7 @@ export default function StudentDashboard() {
   useEffect(() => {
     if (!user) return;
 
-    // Verificar localStorage para intro visitado
+    // Verificar localStorage para intro visitada
     const visitedKey = `popov_visited_intro_${user.id}`;
     const visited = localStorage.getItem(visitedKey) === 'true';
     setIntroVisited(visited);
@@ -45,7 +45,7 @@ export default function StudentDashboard() {
 
       setHasInProgressSession(sessions && sessions.length > 0);
 
-      // Buscar todas as sessions do usuário para verificar results
+      // Buscar todas as sessões do utilizador para verificar results
       const { data: allSessions } = await supabase
         .from('assessment_sessions')
         .select('id')
@@ -54,7 +54,7 @@ export default function StudentDashboard() {
       if (allSessions && allSessions.length > 0) {
         const sessionIds = allSessions.map(s => s.id);
 
-        // Verificar se existe results para essas sessions
+        // Verificar se existem results para essas sessões
         const { data: results } = await supabase
           .from('results')
           .select('generated_at')
@@ -90,19 +90,19 @@ export default function StudentDashboard() {
   const cards: CardConfig[] = [
     {
       id: 'intro',
-      title: 'Sobre você',
+      title: 'Sobre ti',
       icon: Info,
       locked: false
     },
     {
       id: 'assessment',
-      title: 'Faça sua avaliação',
+      title: 'Faz a tua avaliação',
       icon: ClipboardList,
       locked: !introVisited
     },
     {
       id: 'results',
-      title: 'Seus resultados',
+      title: 'Os teus resultados',
       icon: BarChart3,
       locked: !hasResults
     }
@@ -117,13 +117,13 @@ export default function StudentDashboard() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+    return date.toLocaleDateString('pt-PT');
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
-        <p className="text-[#94A3B8]">Carregando...</p>
+        <p className="text-[#94A3B8]">A carregar...</p>
       </div>
     );
   }
@@ -140,7 +140,7 @@ export default function StudentDashboard() {
               href="/app/perfil"
               className="text-white text-sm hover:underline"
             >
-              Meu perfil
+              O meu perfil
             </a>
             <button
               onClick={handleSignOut}
@@ -197,17 +197,17 @@ export default function StudentDashboard() {
         <main className="flex-1 p-8 max-w-4xl">
           {selectedCard === 'intro' && (
             <div>
-              <h2 className="text-2xl font-bold text-white mb-6">Sobre você</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Sobre ti</h2>
 
               <div className="space-y-4 text-base text-[#F1F5F9] leading-relaxed">
                 <p>
-                  O POPOV é um programa de orientação que ajuda você a conhecer melhor seus interesses, habilidades e possíveis caminhos profissionais.
+                  O POPOV é um programa de orientação que te ajuda a conhecer melhor os teus interesses, as tuas competências e possíveis percursos profissionais.
                 </p>
                 <p>
-                  Você vai responder dois questionários: um sobre seus interesses e outro sobre suas habilidades. Não existem respostas certas ou erradas, apenas as que mais se parecem com você.
+                  Vais responder a dois questionários: um sobre os teus interesses e outro sobre as tuas competências. Não há respostas certas ou erradas, apenas as que mais se parecem contigo.
                 </p>
                 <p>
-                  No final, você verá um relatório com áreas profissionais que combinam com seu perfil, profissões reais associadas e formações disponíveis para chegar lá.
+                  No final, vais ver um relatório com áreas profissionais que combinam com o teu perfil, profissões reais associadas e formações disponíveis para lá chegar.
                 </p>
               </div>
 
@@ -222,15 +222,15 @@ export default function StudentDashboard() {
 
           {selectedCard === 'assessment' && (
             <div>
-              <h2 className="text-2xl font-bold text-white mb-6">Faça sua avaliação</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Faz a tua avaliação</h2>
 
               <p className="text-base text-[#F1F5F9] leading-relaxed mb-6">
-                A avaliação tem duas partes: a primeira sobre seus interesses (47 perguntas) e a segunda sobre suas habilidades (28 perguntas). Tempo total estimado: 25 a 40 minutos. Você pode pausar e retomar quando quiser.
+                A avaliação tem duas partes: a primeira sobre os teus interesses (47 perguntas) e a segunda sobre as tuas competências (28 perguntas). Tempo total estimado: 25 a 40 minutos. Podes parar e retomar quando quiseres.
               </p>
 
               {hasInProgressSession ? (
                 <div className="bg-[#1E293B] border border-[#334155] rounded-lg p-6 mb-6">
-                  <p className="text-white mb-4">Você já começou uma avaliação.</p>
+                  <p className="text-white mb-4">Já começaste uma avaliação.</p>
                   <button
                     onClick={() => navigate('/app/questionario')}
                     className="px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors"
@@ -251,12 +251,12 @@ export default function StudentDashboard() {
 
           {selectedCard === 'results' && (
             <div>
-              <h2 className="text-2xl font-bold text-white mb-6">Seus resultados</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Os teus resultados</h2>
 
               {hasResults && lastResultDate ? (
                 <div className="bg-[#1E293B] border border-[#334155] rounded-lg p-6">
                   <p className="text-white mb-4">
-                    Sua última avaliação foi concluída em {formatDate(lastResultDate)}.
+                    A tua última avaliação foi concluída em {formatDate(lastResultDate)}.
                   </p>
                   <button
                     onClick={() => navigate('/app/resultados')}
@@ -266,7 +266,7 @@ export default function StudentDashboard() {
                   </button>
                 </div>
               ) : (
-                <p className="text-[#94A3B8]">Você ainda não completou sua avaliação.</p>
+                <p className="text-[#94A3B8]">Ainda não concluíste a tua avaliação.</p>
               )}
             </div>
           )}
