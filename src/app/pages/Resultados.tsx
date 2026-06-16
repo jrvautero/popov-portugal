@@ -83,14 +83,14 @@ const INTEL_NAMES: Record<string, string> = {
 };
 
 const AREA_DESCRIPTIONS: Record<string, string> = {
-  "0": "Esta área engloba formações voltadas ao ensino, à pesquisa pedagógica e ao desenvolvimento humano em todas as idades. Você poderá atuar em escolas, universidades, ONGs educacionais ou desenvolver materiais didáticos. Suas habilidades de comunicação, paciência e empatia serão diferenciais para impactar positivamente a vida de outras pessoas.",
-  "2": "Esta área inclui formações em artes visuais, música, literatura, história, filosofia e idiomas. Você poderá trabalhar com criação artística, produção cultural, ensino, pesquisa ou comunicação. Sua sensibilidade estética, capacidade crítica e expressão criativa serão centrais na sua trajetória profissional.",
-  "3": "Esta área reúne formações em administração, economia, direito, jornalismo, sociologia e ciências do comportamento. Você poderá atuar em empresas privadas, órgãos públicos, escritórios jurídicos ou organizações sociais. Suas habilidades analíticas, comunicativas e de tomada de decisão guiarão seu caminho.",
-  "4": "Esta área abrange formações em matemática, física, química, biologia, estatística e tecnologia da informação. Você poderá trabalhar com pesquisa científica, desenvolvimento de software, análise de dados ou ensino. Sua curiosidade investigativa e raciocínio lógico serão fundamentais.",
-  "5": "Esta área inclui engenharias, arquitetura, construção civil e indústrias de transformação. Você poderá projetar produtos, edifícios e sistemas, ou trabalhar na fabricação e implementação de soluções tecnológicas. Sua capacidade de resolver problemas práticos e pensar de forma estruturada será essencial.",
-  "6": "Esta área engloba formações em agronomia, veterinária, ciências ambientais, silvicultura e pesca. Você poderá atuar em propriedades rurais, agroindústria, conservação ambiental ou pesquisa científica. Seu interesse pela natureza e por sistemas vivos será o motor da sua trajetória.",
-  "7": "Esta área reúne formações em medicina, enfermagem, fisioterapia, psicologia, nutrição e serviço social. Você poderá trabalhar em hospitais, clínicas, escolas, ONGs ou consultórios próprios, cuidando da saúde física e emocional das pessoas. Sua empatia e atenção ao próximo serão diferenciais.",
-  "8": "Esta área abrange formações em turismo, hotelaria, gastronomia, transporte, segurança e proteção ambiental. Você poderá atuar em diversos setores que conectam pessoas a serviços essenciais ou de lazer. Seu senso prático, capacidade de organização e atendimento ao cliente serão valorizados.",
+  "0": "Esta área abrange formações ligadas ao ensino, à investigação pedagógica e ao desenvolvimento humano em todas as idades. Podes trabalhar em escolas, universidades, organizações educativas ou no desenvolvimento de materiais didáticos. As tuas competências de comunicação, paciência e empatia serão uma mais-valia para teres um impacto positivo na vida de outras pessoas.",
+  "2": "Esta área inclui formações em artes visuais, música, literatura, história, filosofia e línguas. Podes trabalhar em criação artística, produção cultural, ensino, investigação ou comunicação. A tua sensibilidade estética, capacidade crítica e expressão criativa serão centrais no teu percurso profissional.",
+  "3": "Esta área reúne formações em administração, economia, direito, jornalismo, sociologia e ciências do comportamento. Podes trabalhar em empresas privadas, organismos públicos, escritórios de advocacia ou organizações sociais. As tuas competências analíticas, comunicativas e de tomada de decisão guiarão o teu caminho.",
+  "4": "Esta área abrange formações em matemática, física, química, biologia, estatística e tecnologias de informação. Podes trabalhar em investigação científica, desenvolvimento de software, análise de dados ou ensino. A tua curiosidade investigativa e o teu raciocínio lógico serão fundamentais.",
+  "5": "Esta área inclui engenharias, arquitetura, construção e indústrias de transformação. Podes projetar produtos, edifícios e sistemas, ou trabalhar no fabrico e na implementação de soluções tecnológicas. A tua capacidade de resolver problemas práticos e de pensar de forma estruturada será essencial.",
+  "6": "Esta área abrange formações em agronomia, veterinária, ciências ambientais, silvicultura e pescas. Podes trabalhar em explorações agrícolas, agroindústria, conservação ambiental ou investigação científica. O teu interesse pela natureza e pelos sistemas vivos será o motor do teu percurso.",
+  "7": "Esta área reúne formações em medicina, enfermagem, fisioterapia, psicologia, nutrição e serviço social. Podes trabalhar em hospitais, clínicas, escolas, organizações sociais ou consultórios próprios, cuidando da saúde física e emocional das pessoas. A tua empatia e atenção ao próximo serão uma mais-valia.",
+  "8": "Esta área abrange formações em turismo, hotelaria, restauração, transportes, segurança e proteção ambiental. Podes trabalhar em vários setores que ligam as pessoas a serviços essenciais ou de lazer. O teu sentido prático, a tua capacidade de organização e o atendimento ao cliente serão valorizados.",
 };
 
 const AREA_IMAGES: Record<string, string> = {
@@ -218,7 +218,7 @@ export default function Resultados() {
         if (error || !data?.text) {
           console.error("Erro ao gerar orientador_text:", error);
           setErrorOrientador(
-            "Não foi possível gerar a análise no momento. Tente recarregar a página."
+            "Não foi possível gerar a análise neste momento. Tenta recarregar a página."
           );
         } else {
           setOrientadorText(data.text);
@@ -226,7 +226,7 @@ export default function Resultados() {
       } catch (err) {
         console.error("Erro inesperado ao gerar orientador_text:", err);
         setErrorOrientador(
-          "Não foi possível gerar a análise no momento. Tente recarregar a página."
+          "Não foi possível gerar a análise neste momento. Tenta recarregar a página."
         );
       } finally {
         setLoadingOrientador(false);
@@ -297,7 +297,7 @@ export default function Resultados() {
 
       if (sessionsRes.error) {
         console.error("Erro ao buscar sessões:", sessionsRes.error);
-        setError("Não foi possível carregar seus resultados. Tente recarregar a página. Se persistir, entre em contato.");
+        setError("Não foi possível carregar os teus resultados. Tenta recarregar a página. Se persistir, contacta o suporte.");
         setLoading(false);
         return;
       }
@@ -317,7 +317,7 @@ export default function Resultados() {
 
       if (resultError) {
         console.error("Erro ao buscar resultados:", resultError);
-        setError("Não foi possível carregar seus resultados. Tente recarregar a página. Se persistir, entre em contato.");
+        setError("Não foi possível carregar os teus resultados. Tenta recarregar a página. Se persistir, contacta o suporte.");
         setLoading(false);
         return;
       }
@@ -332,14 +332,14 @@ export default function Resultados() {
 
       if (Object.entries(data.riasec_scores ?? {}).length === 0) {
         console.error("riasec_scores vazio:", data.riasec_scores);
-        setError("Não foi possível carregar seus resultados. Tente recarregar a página. Se persistir, entre em contato.");
+        setError("Não foi possível carregar os teus resultados. Tenta recarregar a página. Se persistir, contacta o suporte.");
         setLoading(false);
         return;
       }
 
       if (Object.entries(data.intel_scores ?? {}).length === 0) {
         console.error("intel_scores vazio:", data.intel_scores);
-        setError("Não foi possível carregar seus resultados. Tente recarregar a página. Se persistir, entre em contato.");
+        setError("Não foi possível carregar os teus resultados. Tenta recarregar a página. Se persistir, contacta o suporte.");
         setLoading(false);
         return;
       }
@@ -488,7 +488,7 @@ export default function Resultados() {
       }
     } catch (err) {
       console.error("Erro inesperado ao carregar resultados:", err);
-      setError("Não foi possível carregar seus resultados. Tente recarregar a página. Se persistir, entre em contato.");
+      setError("Não foi possível carregar os teus resultados. Tenta recarregar a página. Se persistir, contacta o suporte.");
     } finally {
       setLoading(false);
     }
@@ -524,7 +524,7 @@ export default function Resultados() {
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-[#94A3B8]">
           <RefreshCw className="w-8 h-8 animate-spin" />
-          <p className="text-sm">Carregando resultados...</p>
+          <p className="text-sm">A carregar resultados...</p>
         </div>
       </div>
     );
@@ -606,7 +606,7 @@ export default function Resultados() {
         {/* Hero */}
         <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-8 space-y-2">
           <p className="text-xs uppercase tracking-widest text-[#94A3B8] font-medium">
-            Seu perfil vocacional
+            O teu perfil vocacional
           </p>
           <h1 className="text-3xl font-bold tracking-tight text-[#F1F5F9]">
             {RIASEC_NAMES[topRiasec[0]] ?? topRiasec[0]}
@@ -713,18 +713,18 @@ export default function Resultados() {
             <div className="lg:col-span-3 grid grid-rows-2 gap-4">
               <div className="h-48 flex flex-col justify-start overflow-hidden">
                 <h3 className="text-base font-bold text-[#2BA88C] uppercase tracking-wider mb-3">
-                  Seus Pontos Fortes
+                  Os teus pontos fortes
                 </h3>
                 <p className="text-xs text-[#94A3B8] leading-relaxed">
-                  Estas são as áreas em que você se destaca. São inerentes à sua personalidade e brilham sem necessidade de esforço. Buscar uma profissão alinhada a elas vai ajudar você a encontrar sua vocação.
+                  Estas são as áreas em que te destacas. São inerentes à tua personalidade e brilham sem esforço. Procurar uma profissão alinhada com elas vai ajudar-te a encontrar a tua vocação.
                 </p>
               </div>
               <div className="h-48 flex flex-col justify-start overflow-hidden">
                 <h3 className="text-base font-bold text-[#EF4444] uppercase tracking-wider mb-3">
-                  Seus Desafios Pessoais
+                  Os teus desafios pessoais
                 </h3>
                 <p className="text-xs text-[#94A3B8] leading-relaxed">
-                  Estas áreas são aquelas com as quais você conecta menos. Ter áreas em que você não se destaca não é algo negativo, e conhecê-las pode ser uma oportunidade para identificar seus pontos a melhorar.
+                  Estas são as áreas com as quais te identificas menos. Ter áreas em que não te destacas não é algo negativo — conhecê-las pode ser uma oportunidade para identificar os teus pontos a melhorar.
                 </p>
               </div>
             </div>
@@ -856,10 +856,10 @@ export default function Resultados() {
                       Itinerários Profissionais
                     </h3>
                     <p className="text-sm text-[#94A3B8] leading-relaxed mb-3">
-                      Neste gráfico estão marcados os itinerários formativos que mais combinam com seu perfil, segundo suas aptidões, interesses e motivações.
+                      Neste gráfico estão marcados os itinerários formativos que mais combinam com o teu perfil, segundo as tuas aptidões, interesses e motivações.
                     </p>
                     <p className="text-sm text-[#94A3B8] leading-relaxed">
-                      Revise com atenção — é aqui que você pode encontrar seu caminho. Nas próximas seções veremos cada um deles em detalhe.
+                      Revê com atenção — é aqui que podes encontrar o teu caminho. Nas próximas secções vamos ver cada um deles em detalhe.
                     </p>
                   </div>
 
@@ -995,7 +995,7 @@ export default function Resultados() {
         {topOccupations.length === 0 && (
           <section className="rounded-xl border border-[#334155] bg-[#1E293B] p-6 text-center">
             <p className="text-sm text-[#94A3B8]">
-              Profissões serão exibidas após o administrador importar os dados de ocupações.
+              As profissões serão mostradas depois de o administrador importar os dados das profissões.
             </p>
           </section>
         )}
@@ -1143,7 +1143,7 @@ export default function Resultados() {
                           </span>
                         </div>
                         <p className="text-xs text-[#94A3B8] mb-3">
-                          Estas profissões emergentes ainda não são tão conhecidas. Você se atreve a ser pioneiro(a)?
+                          Estas profissões emergentes ainda não são tão conhecidas. Atreves-te a ser pioneiro(a)?
                         </p>
                         <p className="text-sm text-[#94A3B8] italic">
                           Em breve — profissões emergentes em construção
