@@ -24,44 +24,36 @@ export default function Signup() {
   const [generalError, setGeneralError] = useState('');
 
   const educationLevels = [
-    'Ensino Fundamental II (6º ao 9º ano)',
-    'Ensino Médio - 1ª série',
-    'Ensino Médio - 2ª série',
-    'Ensino Médio - 3ª série',
-    'Cursinho pré-vestibular',
-    'Ensino Superior (universitário)',
+    'Ensino Básico — 3.º ciclo (7.º ao 9.º ano)',
+    'Ensino Secundário — 10.º ano',
+    'Ensino Secundário — 11.º ano',
+    'Ensino Secundário — 12.º ano',
+    'Ensino Superior',
     'Já concluí o Ensino Superior',
     'Outro'
   ];
 
-  const brazilianStates = [
-    { code: 'AC', name: 'Acre' },
-    { code: 'AL', name: 'Alagoas' },
-    { code: 'AP', name: 'Amapá' },
-    { code: 'AM', name: 'Amazonas' },
-    { code: 'BA', name: 'Bahia' },
-    { code: 'CE', name: 'Ceará' },
-    { code: 'DF', name: 'Distrito Federal' },
-    { code: 'ES', name: 'Espírito Santo' },
-    { code: 'GO', name: 'Goiás' },
-    { code: 'MA', name: 'Maranhão' },
-    { code: 'MT', name: 'Mato Grosso' },
-    { code: 'MS', name: 'Mato Grosso do Sul' },
-    { code: 'MG', name: 'Minas Gerais' },
-    { code: 'PA', name: 'Pará' },
-    { code: 'PB', name: 'Paraíba' },
-    { code: 'PR', name: 'Paraná' },
-    { code: 'PE', name: 'Pernambuco' },
-    { code: 'PI', name: 'Piauí' },
-    { code: 'RJ', name: 'Rio de Janeiro' },
-    { code: 'RN', name: 'Rio Grande do Norte' },
-    { code: 'RS', name: 'Rio Grande do Sul' },
-    { code: 'RO', name: 'Rondônia' },
-    { code: 'RR', name: 'Roraima' },
-    { code: 'SC', name: 'Santa Catarina' },
-    { code: 'SP', name: 'São Paulo' },
-    { code: 'SE', name: 'Sergipe' },
-    { code: 'TO', name: 'Tocantins' }
+  const distritos = [
+    'Aveiro',
+    'Beja',
+    'Braga',
+    'Bragança',
+    'Castelo Branco',
+    'Coimbra',
+    'Évora',
+    'Faro',
+    'Guarda',
+    'Leiria',
+    'Lisboa',
+    'Portalegre',
+    'Porto',
+    'Santarém',
+    'Setúbal',
+    'Viana do Castelo',
+    'Vila Real',
+    'Viseu',
+    'Região Autónoma dos Açores',
+    'Região Autónoma da Madeira'
   ];
 
   useEffect(() => {
@@ -80,7 +72,7 @@ export default function Signup() {
     const newErrors: Record<string, string> = {};
 
     if (fullName.trim().length < 3) {
-      newErrors.fullName = 'Nome completo deve ter pelo menos 3 caracteres';
+      newErrors.fullName = 'O nome completo deve ter pelo menos 3 caracteres';
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -89,34 +81,34 @@ export default function Signup() {
     }
 
     if (password.length < 8) {
-      newErrors.password = 'A senha precisa ter pelo menos 8 caracteres';
+      newErrors.password = 'A palavra-passe deve ter pelo menos 8 caracteres';
     }
 
     if (!birthDate) {
-      newErrors.birthDate = 'Preencha a data de nascimento';
+      newErrors.birthDate = 'Indica a data de nascimento';
     } else {
       const birthYear = new Date(birthDate).getFullYear();
       const currentYear = new Date().getFullYear();
       if (birthYear < 1940 || birthYear > currentYear - 5) {
-        newErrors.birthDate = `Ano de nascimento deve estar entre 1940 e ${currentYear - 5}`;
+        newErrors.birthDate = `O ano de nascimento deve estar entre 1940 e ${currentYear - 5}`;
       }
     }
 
     if (!educationLevel) {
-      newErrors.educationLevel = 'Selecione o nível educacional';
+      newErrors.educationLevel = 'Seleciona o nível de ensino';
     }
 
     if (!state) {
-      newErrors.state = 'Selecione o estado';
+      newErrors.state = 'Seleciona o distrito';
     }
 
     if (city.trim().length < 2) {
-      newErrors.city = 'Cidade deve ter pelo menos 2 caracteres';
+      newErrors.city = 'A localidade deve ter pelo menos 2 caracteres';
     }
 
     if (signupType === 'school') {
-      if (!schoolId) newErrors.schoolId = 'Selecione uma escola';
-      if (!className.trim()) newErrors.className = 'Preencha a turma';
+      if (!schoolId) newErrors.schoolId = 'Seleciona uma escola';
+      if (!className.trim()) newErrors.className = 'Indica a turma';
     }
 
     setErrors(newErrors);
@@ -132,7 +124,7 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      // 1. Criar usuário
+      // 1. Criar utilizador
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -142,25 +134,25 @@ export default function Signup() {
       if (authError) {
         // Mapear erros
         if (authError.message.includes('User already registered') || authError.message.includes('already exists')) {
-          setGeneralError('Este e-mail já está cadastrado. Tente entrar.');
+          setGeneralError('Este e-mail já está registado. Tenta entrar.');
         } else if (authError.message.includes('Password should be at least')) {
-          setGeneralError('A senha precisa ter pelo menos 8 caracteres.');
+          setGeneralError('A palavra-passe deve ter pelo menos 8 caracteres.');
         } else if (authError.message.includes('Invalid email')) {
           setGeneralError('E-mail inválido.');
         } else {
-          setGeneralError('Não foi possível criar a conta. Tente novamente em alguns instantes.');
+          setGeneralError('Não foi possível criar a conta. Tenta novamente dentro de instantes.');
         }
         setLoading(false);
         return;
       }
 
       if (!authData.user) {
-        setGeneralError('Não foi possível criar a conta. Tente novamente em alguns instantes.');
+        setGeneralError('Não foi possível criar a conta. Tenta novamente dentro de instantes.');
         setLoading(false);
         return;
       }
 
-      // 2. Criar profile
+      // 2. Criar perfil
       const { error: profileError } = await supabase.from('profiles').insert({
         id: authData.user.id,
         role: 'student',
@@ -173,12 +165,12 @@ export default function Signup() {
       });
 
       if (profileError) {
-        setGeneralError('Conta criada, mas houve um erro ao configurar o perfil. Entre em contato com o suporte.');
+        setGeneralError('Conta criada, mas ocorreu um erro ao configurar o perfil. Contacta o suporte.');
         setLoading(false);
         return;
       }
 
-      // 3. Se cadastro por escola, criar vínculo
+      // 3. Se registo por escola, criar associação
       if (signupType === 'school' && schoolId && className) {
         await supabase.from('student_schools').insert({
           student_id: authData.user.id,
@@ -190,7 +182,7 @@ export default function Signup() {
       // 4. Redirecionar
       navigate('/app');
     } catch (err) {
-      setGeneralError('Não foi possível criar a conta. Tente novamente em alguns instantes.');
+      setGeneralError('Não foi possível criar a conta. Tenta novamente dentro de instantes.');
       setLoading(false);
     }
   };
@@ -236,9 +228,9 @@ export default function Signup() {
             {errors.email && <p className="text-[#EF4444] text-sm mt-1">{errors.email}</p>}
           </div>
 
-          {/* Senha */}
+          {/* Palavra-passe */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">Senha</label>
+            <label className="block text-sm font-medium text-white mb-2">Palavra-passe</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -271,16 +263,16 @@ export default function Signup() {
             {errors.birthDate && <p className="text-[#EF4444] text-sm mt-1">{errors.birthDate}</p>}
           </div>
 
-          {/* Nível educacional */}
+          {/* Nível de ensino */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">Nível educacional atual</label>
+            <label className="block text-sm font-medium text-white mb-2">Nível de ensino atual</label>
             <select
               value={educationLevel}
               onChange={(e) => setEducationLevel(e.target.value)}
               className="w-full px-4 py-2.5 bg-[#0F172A] border border-[#334155] rounded-lg text-white focus:outline-none focus:border-[#2BA88C]"
               disabled={loading}
             >
-              <option value="">Selecione...</option>
+              <option value="">Seleciona...</option>
               {educationLevels.map((level) => (
                 <option key={level} value={level}>{level}</option>
               ))}
@@ -288,26 +280,26 @@ export default function Signup() {
             {errors.educationLevel && <p className="text-[#EF4444] text-sm mt-1">{errors.educationLevel}</p>}
           </div>
 
-          {/* Estado */}
+          {/* Distrito */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">Estado (UF)</label>
+            <label className="block text-sm font-medium text-white mb-2">Distrito</label>
             <select
               value={state}
               onChange={(e) => setState(e.target.value)}
               className="w-full px-4 py-2.5 bg-[#0F172A] border border-[#334155] rounded-lg text-white focus:outline-none focus:border-[#2BA88C]"
               disabled={loading}
             >
-              <option value="">Selecione...</option>
-              {brazilianStates.map((st) => (
-                <option key={st.code} value={st.code}>{st.code} — {st.name}</option>
+              <option value="">Seleciona...</option>
+              {distritos.map((d) => (
+                <option key={d} value={d}>{d}</option>
               ))}
             </select>
             {errors.state && <p className="text-[#EF4444] text-sm mt-1">{errors.state}</p>}
           </div>
 
-          {/* Cidade */}
+          {/* Localidade */}
           <div>
-            <label className="block text-sm font-medium text-white mb-2">Cidade</label>
+            <label className="block text-sm font-medium text-white mb-2">Localidade</label>
             <input
               type="text"
               value={city}
@@ -318,9 +310,9 @@ export default function Signup() {
             {errors.city && <p className="text-[#EF4444] text-sm mt-1">{errors.city}</p>}
           </div>
 
-          {/* Tipo de cadastro */}
+          {/* Tipo de registo */}
           <div>
-            <label className="block text-sm font-medium text-white mb-3">Tipo de cadastro</label>
+            <label className="block text-sm font-medium text-white mb-3">Tipo de registo</label>
             <div className="space-y-2">
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -331,7 +323,7 @@ export default function Signup() {
                   className="w-4 h-4 text-[#2BA88C] bg-[#0F172A] border-[#334155]"
                   disabled={loading}
                 />
-                <span className="text-white">Sou estudante (cadastro individual)</span>
+                <span className="text-white">Sou estudante (registo individual)</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
@@ -342,7 +334,7 @@ export default function Signup() {
                   className="w-4 h-4 text-[#2BA88C] bg-[#0F172A] border-[#334155]"
                   disabled={loading}
                 />
-                <span className="text-white">Estou cadastrando por uma escola</span>
+                <span className="text-white">Estou a registar-me através de uma escola</span>
               </label>
             </div>
           </div>
@@ -352,9 +344,9 @@ export default function Signup() {
             <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
               {/* Escola */}
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Selecione sua escola</label>
+                <label className="block text-sm font-medium text-white mb-2">Seleciona a tua escola</label>
                 {schools.length === 0 ? (
-                  <p className="text-[#94A3B8] text-sm">Nenhuma escola cadastrada ainda. Selecione 'Sou estudante' ou aguarde.</p>
+                  <p className="text-[#94A3B8] text-sm">Ainda não há escolas registadas. Seleciona "Sou estudante" ou aguarda.</p>
                 ) : (
                   <select
                     value={schoolId}
@@ -362,7 +354,7 @@ export default function Signup() {
                     className="w-full px-4 py-2.5 bg-[#0F172A] border border-[#334155] rounded-lg text-white focus:outline-none focus:border-[#2BA88C]"
                     disabled={loading}
                   >
-                    <option value="">Selecione...</option>
+                    <option value="">Seleciona...</option>
                     {schools.map((school) => (
                       <option key={school.id} value={school.id}>{school.name}</option>
                     ))}
@@ -378,7 +370,7 @@ export default function Signup() {
                   type="text"
                   value={className}
                   onChange={(e) => setClassName(e.target.value)}
-                  placeholder="Ex: Turma A"
+                  placeholder="Ex.: Turma A"
                   className="w-full px-4 py-2.5 bg-[#0F172A] border border-[#334155] rounded-lg text-white placeholder-[#94A3B8] focus:outline-none focus:border-[#2BA88C]"
                   disabled={loading}
                 />
@@ -400,7 +392,7 @@ export default function Signup() {
             disabled={!isFormValid || loading}
             className="w-full mt-6 px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Criando...' : 'Criar conta'}
+            {loading ? 'A criar...' : 'Criar conta'}
           </button>
 
           {/* Aviso beta */}
@@ -408,7 +400,7 @@ export default function Signup() {
 
           {/* Link para login */}
           <p className="text-center text-[#94A3B8] text-sm mt-6">
-            Já tem conta?{' '}
+            Já tens conta?{' '}
             <a href="/login" className="text-white hover:underline">Entrar</a>
           </p>
         </form>
