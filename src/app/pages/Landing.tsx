@@ -26,7 +26,7 @@ export default function Landing() {
           Programa de Orientação Profissional e Vocacional
         </p>
         <p className="text-lg text-white mt-8 mb-10 max-w-3xl mx-auto">
-          Que pergunta sobre o seu futuro profissional você tem agora?
+          Que pergunta sobre o teu futuro profissional tens agora?
         </p>
         <div className="flex items-center justify-center gap-4 flex-wrap">
           <a
@@ -44,18 +44,18 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* SEÇÃO SOBRE O PROGRAMA */}
+      {/* SECÇÃO SOBRE O PROGRAMA */}
       <section id="sobre" className="max-w-7xl mx-auto px-6 mt-24 py-16">
         <h2 className="text-3xl font-bold text-center text-white mb-10">Sobre o Programa</h2>
         <div className="max-w-4xl mx-auto bg-[#1E293B] rounded-xl p-10 space-y-6">
           <p className="text-base leading-relaxed">
-            O POPOV é um programa de orientação profissional e vocacional voltado para estudantes do Ensino Fundamental II e do Ensino Médio.
+            O POPOV é um programa de orientação profissional e vocacional dirigido a estudantes do Ensino Básico (3.º ciclo) e do Ensino Secundário.
           </p>
           <p className="text-base leading-relaxed">
-            Nosso objetivo é apoiar você na descoberta de áreas profissionais alinhadas aos seus interesses e habilidades, oferecendo um relatório personalizado com profissões e caminhos formativos reais.
+            O nosso objetivo é apoiar-te na descoberta de áreas profissionais alinhadas aos teus interesses e competências, com um relatório personalizado com profissões e percursos formativos reais.
           </p>
           <p className="text-base leading-relaxed">
-            Você responde dois questionários breves e recebe um relatório com áreas profissionais alinhadas ao seu perfil, profissões reais e caminhos formativos disponíveis.
+            Respondes a dois questionários breves e recebes um relatório com áreas profissionais alinhadas ao teu perfil, profissões reais e percursos formativos disponíveis.
           </p>
         </div>
       </section>
@@ -64,16 +64,16 @@ export default function Landing() {
       <footer className="bg-[#0F172A] border-t border-[#334155] mt-24">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-center md:text-left">
-            {/* Coluna 1 - Contato */}
+            {/* Coluna 1 - Contacto */}
             <div>
-              <h4 className="font-semibold text-white mb-3">Contato</h4>
-              <p className="text-[#94A3B8]">contato@popov.com.br</p>
+              <h4 className="font-semibold text-white mb-3">Contacto</h4>
+              <p className="text-[#94A3B8]">contacto@popov.com.br</p>
             </div>
             {/* Coluna 2 - Sobre */}
             <div>
               <h4 className="font-semibold text-white mb-3">Sobre</h4>
               <div className="flex flex-col gap-2 text-[#94A3B8]">
-                <a href="#" className="hover:text-white transition-colors">Termos de uso</a>
+                <a href="#" className="hover:text-white transition-colors">Termos de utilização</a>
                 <a href="#" className="hover:text-white transition-colors">Política de privacidade</a>
               </div>
             </div>
