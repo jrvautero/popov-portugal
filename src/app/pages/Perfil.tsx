@@ -87,7 +87,7 @@ export default function Perfil() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
-        <p className="text-[#94A3B8]">Carregando...</p>
+        <p className="text-[#94A3B8]">A carregar...</p>
       </div>
     );
   }
@@ -104,7 +104,7 @@ export default function Perfil() {
               href="/app"
               className="text-white text-sm hover:underline"
             >
-              Voltar para o painel
+              Voltar ao painel
             </a>
             <button
               onClick={handleSignOut}
@@ -118,27 +118,27 @@ export default function Perfil() {
 
       {/* CONTEÚDO PRINCIPAL */}
       <main className="max-w-2xl mx-auto p-8">
-        <h1 className="text-2xl font-bold text-white mb-8">Seu perfil</h1>
+        <h1 className="text-2xl font-bold text-white mb-8">O teu perfil</h1>
 
         <div className="bg-[#1E293B] rounded-xl p-8">
           <div className="space-y-4">
             {/* Nome completo */}
             <div>
               <label className="block text-sm text-[#94A3B8] mb-1">Nome completo</label>
-              <p className="text-base text-white font-medium">{profileData?.full_name || 'Não informado'}</p>
+              <p className="text-base text-white font-medium">{profileData?.full_name || 'Não indicado'}</p>
             </div>
 
             {/* E-mail */}
             <div>
               <label className="block text-sm text-[#94A3B8] mb-1">E-mail</label>
-              <p className="text-base text-white font-medium">{profileData?.email || 'Não informado'}</p>
+              <p className="text-base text-white font-medium">{profileData?.email || 'Não indicado'}</p>
             </div>
 
             {/* Data de nascimento */}
             <div>
               <label className="block text-sm text-[#94A3B8] mb-1">Data de nascimento</label>
               <p className="text-base text-white font-medium">
-                {profileData?.birth_date ? formatDate(profileData.birth_date) : 'Não informado'}
+                {profileData?.birth_date ? formatDate(profileData.birth_date) : 'Não indicado'}
               </p>
             </div>
 
@@ -146,38 +146,38 @@ export default function Perfil() {
             <div>
               <label className="block text-sm text-[#94A3B8] mb-1">Idade</label>
               <p className="text-base text-white font-medium">
-                {profileData?.birth_date ? `${calculateAge(profileData.birth_date)} anos` : 'Não informado'}
+                {profileData?.birth_date ? `${calculateAge(profileData.birth_date)} anos` : 'Não indicado'}
               </p>
             </div>
 
-            {/* Nível educacional */}
+            {/* Nível de ensino */}
             <div>
-              <label className="block text-sm text-[#94A3B8] mb-1">Nível educacional</label>
-              <p className="text-base text-white font-medium">{profileData?.education_level || 'Não informado'}</p>
+              <label className="block text-sm text-[#94A3B8] mb-1">Nível de ensino</label>
+              <p className="text-base text-white font-medium">{profileData?.education_level || 'Não indicado'}</p>
             </div>
 
-            {/* Cidade */}
+            {/* Localidade */}
             <div>
-              <label className="block text-sm text-[#94A3B8] mb-1">Cidade</label>
-              <p className="text-base text-white font-medium">{profileData?.city || 'Não informado'}</p>
+              <label className="block text-sm text-[#94A3B8] mb-1">Localidade</label>
+              <p className="text-base text-white font-medium">{profileData?.city || 'Não indicado'}</p>
             </div>
 
-            {/* Estado */}
+            {/* Distrito */}
             <div>
-              <label className="block text-sm text-[#94A3B8] mb-1">Estado</label>
-              <p className="text-base text-white font-medium">{profileData?.state || 'Não informado'}</p>
+              <label className="block text-sm text-[#94A3B8] mb-1">Distrito</label>
+              <p className="text-base text-white font-medium">{profileData?.state || 'Não indicado'}</p>
             </div>
 
             {/* Escola */}
             <div>
               <label className="block text-sm text-[#94A3B8] mb-1">Escola</label>
-              <p className="text-base text-white font-medium">{schoolData?.school_name || 'Não informado'}</p>
+              <p className="text-base text-white font-medium">{schoolData?.school_name || 'Não indicado'}</p>
             </div>
 
             {/* Turma */}
             <div>
               <label className="block text-sm text-[#94A3B8] mb-1">Turma</label>
-              <p className="text-base text-white font-medium">{schoolData?.class_name || 'Não informado'}</p>
+              <p className="text-base text-white font-medium">{schoolData?.class_name || 'Não indicado'}</p>
             </div>
           </div>
 
