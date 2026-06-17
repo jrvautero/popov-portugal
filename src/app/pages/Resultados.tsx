@@ -614,11 +614,12 @@ export default function Resultados() {
     const ordered = Object.entries(cchScores).sort((a, b) => b[1] - a[1]);
     const detailed = result.cch_detailed ?? {};
 
-    // Dados do radar (teia) — 4 áreas CCH
-    const radarData = ordered.map(([code, score]) => ({
+    // Dados do radar (teia) — 4 áreas CCH em ordem fixa (estável)
+    const CCH_ORDER = ["CT", "CSE", "LH", "AV"];
+    const radarData = CCH_ORDER.filter((code) => code in cchScores).map((code) => ({
       area: CCH_AREAS[code]?.nome ?? code,
       code,
-      value: score,
+      value: cchScores[code],
     }));
 
     // Alinhamento da inteligência: cor + rótulo
@@ -731,7 +732,7 @@ export default function Resultados() {
                         className="bg-[#0F172A] border border-[#334155] rounded-lg p-3 flex items-center gap-3"
                       >
                         <BookOpenCheck className="w-5 h-5 text-[#94A3B8] shrink-0" />
-                        <span className="text-sm text-[#F1F5F9] leading-tight flex-1">
+                        <span className="text-sm text-[#F1F5F9] leading-tight flex-1 min-w-0">
                           {CCH_AREAS[code]?.nome ?? code}
                         </span>
                         <span className="text-base text-[#2BA88C] font-bold tabular-nums shrink-0">
@@ -745,16 +746,17 @@ export default function Resultados() {
 
               <div className="lg:col-span-2">
                 <ResponsiveContainer width="100%" height={460}>
-                  <RadarChart data={radarData} outerRadius="72%" margin={{ top: 50, right: 90, bottom: 50, left: 90 }}>
+                  <RadarChart data={radarData} outerRadius="70%" margin={{ top: 60, right: 100, bottom: 60, left: 100 }}>
                     <PolarGrid stroke="#334155" />
                     <PolarAngleAxis dataKey="area" tick={renderCchTick as any} />
-                    <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
+                    <PolarRadiusAxis angle={90} domain={[0, 115]} tick={false} axisLine={false} />
                     <Radar
                       name="Afinidade"
                       dataKey="value"
                       stroke="#2BA88C"
                       strokeWidth={2}
                       fill="rgba(43, 168, 140, 0.35)"
+                      dot={{ r: 4, fill: "#2BA88C", stroke: "#0F172A", strokeWidth: 2 }}
                     />
                     <Tooltip
                       contentStyle={{
