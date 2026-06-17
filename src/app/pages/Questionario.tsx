@@ -4,7 +4,7 @@ import { Check } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 
-type Stage = 'intro1' | 'stage1' | 'transition' | 'stage2' | 'conclusion';
+type Stage = 'selectType' | 'intro1' | 'stage1' | 'transition' | 'stage2' | 'conclusion';
 
 interface InterestItem {
   cod: string;
@@ -80,6 +80,7 @@ export default function Questionario() {
   const { user } = useAuth();
 
   const [stage, setStage] = useState<Stage>('intro1');
+  const [resultMode, setResultMode] = useState<'3ciclo' | 'secundario'>('secundario');
   const [sessionId, setSessionId] = useState<string | null>(null);
 
   const [interestItems, setInterestItems] = useState<InterestItem[]>([]);
@@ -117,6 +118,7 @@ export default function Questionario() {
         .limit(1);
 
       let currentSessionId: string;
+      let existingMode: string | null = null;
 
       // 2. Se não existe, criar nova
       if (!sessions || sessions.length === 0) {
@@ -127,11 +129,24 @@ export default function Questionario() {
           .single();
 
         currentSessionId = newSession!.id;
+        existingMode = (newSession as { result_mode?: string | null })?.result_mode ?? null;
       } else {
         currentSessionId = sessions[0].id;
+        existingMode = (sessions[0] as { result_mode?: string | null })?.result_mode ?? null;
       }
 
       setSessionId(currentSessionId);
+
+      // Tipo de resultado: escolha já guardada, ou pré-seleção pela escolaridade do registo
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('education_level')
+        .eq('id', user.id)
+        .single();
+      const edu = prof?.education_level ?? '';
+      const default3Ciclo =
+        edu.includes('3.º ciclo') || edu.includes('3º ciclo') || edu.toLowerCase().includes('básico');
+      setResultMode((existingMode as '3ciclo' | 'secundario') ?? (default3Ciclo ? '3ciclo' : 'secundario'));
 
       // 3. Carregar itens das tabelas de referência
       const { data: intItems } = await supabase
@@ -177,8 +192,8 @@ export default function Questionario() {
       const intelCount = Object.keys(intelAnswersMap).length;
 
       if (intCount === 0 && intelCount === 0) {
-        // Nenhuma resposta - mostrar intro
-        setStage('intro1');
+        // Nenhuma resposta — escolher tipo (se ainda não escolhido) ou intro
+        setStage(existingMode ? 'intro1' : 'selectType');
       } else if (intCount < TOTAL_INTEREST) {
         // Etapa 1 parcial
         setStage('stage1');
@@ -198,6 +213,15 @@ export default function Questionario() {
 
     initQuestionario();
   }, [user]);
+
+  const confirmResultMode = async () => {
+    if (!sessionId) return;
+    await supabase
+      .from('assessment_sessions')
+      .update({ result_mode: resultMode })
+      .eq('id', sessionId);
+    setStage('intro1');
+  };
 
   // Scroll para a primeira pergunta não respondida quando a etapa muda
   useEffect(() => {
@@ -515,6 +539,61 @@ export default function Questionario() {
       <div className="pt-20">
         {/* CONTEÚDO */}
         <main className="max-w-4xl mx-auto p-8">
+          {/* ENTRADA: ESCOLHA DO TIPO DE RESULTADO */}
+          {stage === 'selectType' && (
+            <div className="flex items-center justify-center min-h-[70vh]">
+              <div className="bg-[#1E293B] rounded-xl p-10 max-w-2xl w-full">
+                <h2 className="text-2xl font-bold text-white mb-2">Que orientação queres?</h2>
+                <p className="text-sm text-[#94A3B8] mb-6">
+                  Já vem escolhida com base no teu nível de ensino. Podes mudar se quiseres. As perguntas do teste são as mesmas — só muda o resultado no fim.
+                </p>
+
+                <div className="space-y-3 mb-6">
+                  {([
+                    {
+                      key: 'secundario',
+                      titulo: 'Secundário / Superior',
+                      desc: 'Profissões e áreas de formação com mais afinidade contigo.',
+                    },
+                    {
+                      key: '3ciclo',
+                      titulo: '9.º ano — áreas do Secundário',
+                      desc: 'As áreas do Secundário (Ciências e Tecnologias, Socioeconómicas, Línguas e Humanidades, Artes Visuais) que mais combinam contigo.',
+                    },
+                  ] as const).map((opt) => {
+                    const sel = resultMode === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        onClick={() => setResultMode(opt.key)}
+                        className="w-full text-left rounded-lg p-5 transition-colors"
+                        style={{
+                          backgroundColor: sel ? 'rgba(43,168,140,0.12)' : '#0F172A',
+                          border: sel ? '2px solid #2BA88C' : '1px solid #334155',
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-base font-bold text-[#F1F5F9]">{opt.titulo}</span>
+                          {sel && (
+                            <span className="text-xs font-semibold text-[#2BA88C]">Selecionado</span>
+                          )}
+                        </div>
+                        <p className="text-sm text-[#94A3B8]">{opt.desc}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={confirmResultMode}
+                  className="w-full px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors"
+                >
+                  Começar
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* TELA DE INTRODUÇÃO ETAPA 1 */}
           {stage === 'intro1' && (
             <div className="flex items-center justify-center min-h-[70vh]">
