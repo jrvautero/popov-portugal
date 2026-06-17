@@ -186,8 +186,8 @@ interface ResultData {
         intel_score: number;
         nivel: string | null;
       }[];
-      cursos: { nome: string; afinidade: number }[];
-      profissoes: { esco: string; prof: string; mymentor: string | null; score: number }[];
+      cursos: { nome: string; match: number }[];
+      profissoes: { esco: string; prof: string; mymentor: string | null; match: number }[];
     }
   >;
   top3_areas: string[];
@@ -862,8 +862,13 @@ export default function Resultados() {
                         ) : (
                           <ul className="space-y-1.5">
                             {cursos.map((c, ci) => (
-                              <li key={ci} className="text-sm text-[#F1F5F9] leading-snug">
-                                · {c.nome}
+                              <li key={ci} className="flex items-center justify-between gap-2">
+                                <span className="text-sm text-[#F1F5F9] leading-snug min-w-0 flex-1">
+                                  · {c.nome}
+                                </span>
+                                <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: "#2BA88C" }}>
+                                  {c.match}%
+                                </span>
                               </li>
                             ))}
                           </ul>
@@ -904,6 +909,9 @@ export default function Resultados() {
                                   ) : (
                                     <span className="text-sm text-[#F1F5F9] truncate flex-1">{p.prof}</span>
                                   )}
+                                  <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: "#2BA88C" }}>
+                                    {p.match}%
+                                  </span>
                                 </li>
                               );
                             })}
@@ -976,7 +984,9 @@ export default function Resultados() {
                   "Inglês",
                 ],
               };
-              const ordem = ["2", "3", "1"];
+              const ordem = ["1", "2", "3"].sort(
+                (a, b) => (result.intel_scores?.[b] ?? 0) - (result.intel_scores?.[a] ?? 0)
+              );
               const nivelDe = (s: number) => (s >= 67 ? "forte" : s >= 40 ? "medio" : "fraco");
               return (
                 <div>
@@ -984,10 +994,10 @@ export default function Resultados() {
                     Comparação com as disciplinas
                   </h3>
                   <p className="text-xs text-[#94A3B8] mb-4">
-                    Cada uma destas inteligências está ligada a disciplinas do Secundário. Vê onde estás{" "}
-                    <span style={{ color: "#2BA88C" }}>perto</span>,{" "}
-                    <span style={{ color: "#F59E0B" }}>intermédio</span> ou{" "}
-                    <span style={{ color: "#EF4444" }}>longe</span> do que essas disciplinas pedem.
+                    Cada inteligência sustenta certas disciplinas do Secundário. Se o teu escore numa
+                    inteligência é alto, essas disciplinas tendem a favorecer-te (<span style={{ color: "#2BA88C" }}>perto</span>);
+                    se é baixo, são as que vais sentir mais exigentes (<span style={{ color: "#EF4444" }}>longe</span>).
+                    Da maior para a menor.
                   </p>
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     {ordem.map((cod) => {
@@ -1010,6 +1020,9 @@ export default function Resultados() {
                               {nm.label} · {sc}%
                             </span>
                           </div>
+                          <p className="text-xs text-[#94A3B8] mb-2">
+                            Disciplinas que dependem desta inteligência:
+                          </p>
                           <ul className="space-y-1">
                             {INTEL_DISCIPLINAS[cod].map((disc) => (
                               <li key={disc} className="text-sm text-[#F1F5F9] leading-snug">
