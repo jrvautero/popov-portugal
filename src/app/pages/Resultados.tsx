@@ -180,6 +180,7 @@ interface ResultData {
       disciplinas: {
         disciplina: string;
         peso: number;
+        match: number;
         intel_cod: number | null;
         intel_nome: string | null;
         intel_score: number;
@@ -777,7 +778,9 @@ export default function Resultados() {
             {ordered.map(([code, score], i) => {
               const meta = CCH_AREAS[code];
               const det = detailed[code];
-              const disciplinas = det?.disciplinas ?? [];
+              const disciplinas = (det?.disciplinas ?? [])
+                .slice()
+                .sort((a, b) => (b.match !== a.match ? b.match - a.match : b.peso - a.peso));
               const cursos = det?.cursos ?? [];
               const profissoes = det?.profissoes ?? [];
               const isTop = i === 0;
@@ -816,40 +819,27 @@ export default function Resultados() {
                           </span>
                         </div>
                         <p className="text-xs text-[#94A3B8] mb-3">
-                          Alinhamento entre cada disciplina e o teu perfil de inteligências.
+                          O quanto as profissões e cursos que combinam contigo passam por cada disciplina.
                         </p>
                         {disciplinas.length === 0 ? (
                           <p className="text-sm text-[#94A3B8]">Sem dados.</p>
                         ) : (
-                          <ul className="space-y-2">
-                            {disciplinas.map((d) => {
-                              const nm = d.nivel ? nivelMeta[d.nivel] : null;
-                              return (
-                                <li key={d.disciplina} className="flex items-start justify-between gap-2">
-                                  <div className="min-w-0">
-                                    <span className="block text-sm text-[#F1F5F9] leading-tight truncate">
-                                      {d.disciplina}
-                                    </span>
-                                    {d.intel_nome && (
-                                      <span className="block text-xs text-[#94A3B8] leading-tight">
-                                        {d.intel_nome}
-                                      </span>
-                                    )}
-                                  </div>
-                                  {nm ? (
-                                    <span
-                                      className="text-xs font-semibold shrink-0 px-2 py-0.5 rounded-full"
-                                      style={{ color: nm.color, backgroundColor: `${nm.color}22` }}
-                                      title={`${d.intel_score}%`}
-                                    >
-                                      {nm.label} · {d.intel_score}%
-                                    </span>
-                                  ) : (
-                                    <span className="text-xs text-[#94A3B8] shrink-0">—</span>
-                                  )}
-                                </li>
-                              );
-                            })}
+                          <ul className="space-y-2.5">
+                            {disciplinas.map((d) => (
+                              <li key={d.disciplina}>
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <span className="text-sm text-[#F1F5F9] leading-tight truncate">
+                                    {d.disciplina}
+                                  </span>
+                                  <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: "#2BA88C" }}>
+                                    {d.match}%
+                                  </span>
+                                </div>
+                                <div className="w-full h-1.5 bg-[#1E293B] rounded-full overflow-hidden">
+                                  <div className="h-full bg-[#2BA88C]" style={{ width: `${d.match}%` }} />
+                                </div>
+                              </li>
+                            ))}
                           </ul>
                         )}
                       </div>
@@ -923,6 +913,120 @@ export default function Resultados() {
                 </div>
               );
             })}
+          </section>
+
+          {/* As tuas inteligências */}
+          <section className="bg-[#1E293B] rounded-xl p-8 space-y-8">
+            <div className="flex items-center gap-3">
+              <Calculator style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
+              <h2 className="text-2xl font-bold text-[#F1F5F9]">As tuas inteligências</h2>
+            </div>
+
+            {/* Parte A — resultado direto do teste */}
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8] mb-1">
+                Resultado do teste
+              </h3>
+              <p className="text-xs text-[#94A3B8] mb-4">
+                As tuas pontuações nas sete inteligências múltiplas.
+              </p>
+              <div className="space-y-2">
+                {Object.entries(result.intel_scores ?? {})
+                  .sort((a, b) => Number(b[1]) - Number(a[1]))
+                  .map(([cod, sc]) => (
+                    <div key={cod} className="flex items-center gap-3">
+                      <span className="text-sm text-[#F1F5F9] w-44 shrink-0 truncate">
+                        {INTEL_NAMES[cod] ?? cod}
+                      </span>
+                      <div className="flex-1 h-2.5 bg-[#0F172A] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#2BA88C]" style={{ width: `${sc}%` }} />
+                      </div>
+                      <span className="text-xs font-bold tabular-nums text-[#2BA88C] w-9 text-right shrink-0">
+                        {sc}%
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* Parte B — comparação com as disciplinas */}
+            {(() => {
+              const INTEL_DISCIPLINAS: Record<string, string[]> = {
+                "2": [
+                  "Matemática A",
+                  "Física e Química A",
+                  "Biologia e Geologia",
+                  "Economia A",
+                  "Matemática Aplicada às Ciências Sociais (MACS)",
+                ],
+                "3": [
+                  "Geografia A",
+                  "Desenho A",
+                  "Geometria Descritiva A",
+                  "História da Cultura e das Artes",
+                ],
+                "1": [
+                  "Português",
+                  "Literatura Portuguesa",
+                  "Latim A",
+                  "História A",
+                  "Filosofia",
+                  "Inglês",
+                ],
+              };
+              const ordem = ["2", "3", "1"];
+              const nivelDe = (s: number) => (s >= 67 ? "forte" : s >= 40 ? "medio" : "fraco");
+              return (
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8] mb-1">
+                    Comparação com as disciplinas
+                  </h3>
+                  <p className="text-xs text-[#94A3B8] mb-4">
+                    Cada uma destas inteligências está ligada a disciplinas do Secundário. Vê onde estás{" "}
+                    <span style={{ color: "#2BA88C" }}>perto</span>,{" "}
+                    <span style={{ color: "#F59E0B" }}>intermédio</span> ou{" "}
+                    <span style={{ color: "#EF4444" }}>longe</span> do que essas disciplinas pedem.
+                  </p>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {ordem.map((cod) => {
+                      const sc = result.intel_scores?.[cod] ?? 0;
+                      const nm = nivelMeta[nivelDe(sc)];
+                      return (
+                        <div
+                          key={cod}
+                          className="rounded-lg p-5"
+                          style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-bold text-[#F1F5F9]">
+                              {INTEL_NAMES[cod] ?? cod}
+                            </span>
+                            <span
+                              className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                              style={{ color: nm.color, backgroundColor: `${nm.color}22` }}
+                            >
+                              {nm.label} · {sc}%
+                            </span>
+                          </div>
+                          <ul className="space-y-1">
+                            {INTEL_DISCIPLINAS[cod].map((disc) => (
+                              <li key={disc} className="text-sm text-[#F1F5F9] leading-snug">
+                                · {disc}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-[#94A3B8] leading-relaxed mt-4">
+                    As outras quatro inteligências — Corporal-cinestésica, Musical, Interpessoal e
+                    Intrapessoal — não têm disciplina correspondente nos Cursos Científico-Humanísticos,
+                    por isso não entram nesta comparação.
+                  </p>
+                </div>
+              );
+            })()}
           </section>
 
           {/* A tua recomendação */}
