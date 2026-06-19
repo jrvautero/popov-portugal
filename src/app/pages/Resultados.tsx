@@ -830,7 +830,7 @@ export default function Resultados() {
                             {disciplinas.map((d) => (
                               <li key={d.disciplina}>
                                 <div className="flex items-center justify-between gap-2 mb-1">
-                                  <span className="text-sm text-[#F1F5F9] leading-tight truncate">
+                                  <span className="text-sm text-[#F1F5F9] leading-tight min-w-0 flex-1 break-words">
                                     {d.disciplina}
                                   </span>
                                   <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: "#2BA88C" }}>
@@ -899,15 +899,15 @@ export default function Resultados() {
                                       href={url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="group inline-flex items-center gap-1 text-sm text-[#F1F5F9] hover:text-[#2BA88C] hover:underline transition-colors min-w-0 flex-1"
+                                      className="group inline-flex items-start gap-1 text-sm text-[#F1F5F9] hover:text-[#2BA88C] hover:underline transition-colors min-w-0 flex-1"
                                     >
-                                      <span className="truncate">{p.prof}</span>
+                                      <span className="break-words">{p.prof}</span>
                                       <ExternalLink
-                                        style={{ width: 12, height: 12, color: "#2BA88C", flexShrink: 0 }}
+                                        style={{ width: 12, height: 12, color: "#2BA88C", flexShrink: 0, marginTop: 3 }}
                                       />
                                     </a>
                                   ) : (
-                                    <span className="text-sm text-[#F1F5F9] truncate flex-1">{p.prof}</span>
+                                    <span className="text-sm text-[#F1F5F9] flex-1 min-w-0 break-words">{p.prof}</span>
                                   )}
                                   <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: "#2BA88C" }}>
                                     {p.match}%
