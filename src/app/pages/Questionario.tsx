@@ -197,11 +197,12 @@ export default function Questionario() {
       setIntelligenceAnswers(intelAnswersMap);
 
       // 5. Determinar etapa e posição, conforme o teste a correr
-      const intCount = Object.keys(intAnswersMap).length;
-      const intelCount = Object.keys(intelAnswersMap).length;
+      let intCount = Object.keys(intAnswersMap).length;
+      let intelCount = Object.keys(intelAnswersMap).length;
 
-      // Resolve o id do teste no catálogo e marca-o a_meio (se ainda não concluído).
+      // Resolve o id do teste no catálogo.
       let resolvedTestId: string | null = null;
+      let estaConcluido = false;
       if (testeParam) {
         const { data: tRow } = await supabase
           .from('tests')
@@ -218,20 +219,51 @@ export default function Questionario() {
             .eq('user_id', user.id)
             .eq('test_id', resolvedTestId)
             .maybeSingle();
-          // Só passa a a_meio se não estiver já concluído (rever não baixa o estado).
-          if (!prog || prog.estado !== 'concluido') {
-            await supabase.from('test_progress').upsert(
-              {
-                user_id: user.id,
-                test_id: resolvedTestId,
-                session_id: currentSessionId,
-                estado: 'a_meio',
-                iniciado_em: new Date().toISOString(),
-              },
-              { onConflict: 'user_id,test_id' }
-            );
-          }
+          estaConcluido = prog?.estado === 'concluido';
         }
+      }
+
+      // REFAZER: teste já concluído -> limpa respostas, reabre a sessão
+      // (o gatilho invalida o resultado completo), e recomeça do início.
+      if (estaConcluido && resolvedTestId) {
+        if (tipoTeste === 'interesses') {
+          await supabase.from('interest_answers').delete().eq('session_id', currentSessionId);
+          setInterestAnswers({});
+          intCount = 0;
+        } else {
+          await supabase.from('intelligence_answers').delete().eq('session_id', currentSessionId);
+          setIntelligenceAnswers({});
+          intelCount = 0;
+        }
+        // Reabre a sessão: status volta a in_progress (invalida o completo via gatilho).
+        await supabase
+          .from('assessment_sessions')
+          .update({ status: 'in_progress', completed_at: null })
+          .eq('id', currentSessionId);
+        // Teste volta a a_meio.
+        await supabase.from('test_progress').upsert(
+          {
+            user_id: user.id,
+            test_id: resolvedTestId,
+            session_id: currentSessionId,
+            estado: 'a_meio',
+            iniciado_em: new Date().toISOString(),
+            concluido_em: null,
+          },
+          { onConflict: 'user_id,test_id' }
+        );
+      } else if (resolvedTestId) {
+        // Entrada normal: marca a_meio se ainda não estava concluído.
+        await supabase.from('test_progress').upsert(
+          {
+            user_id: user.id,
+            test_id: resolvedTestId,
+            session_id: currentSessionId,
+            estado: 'a_meio',
+            iniciado_em: new Date().toISOString(),
+          },
+          { onConflict: 'user_id,test_id' }
+        );
       }
 
       if (tipoTeste === 'interesses') {
