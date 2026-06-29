@@ -234,6 +234,7 @@ export default function Resultados() {
   const [recalculating, setRecalculating] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [saldoCreditos, setSaldoCreditos] = useState<number | null>(null);
 
   useEffect(() => {
     loadResults();
@@ -288,6 +289,10 @@ export default function Resultados() {
         navigate("/login");
         return;
       }
+
+      // Saldo de créditos (para o header).
+      const { data: bal } = await supabase.rpc("credit_balance", { p_user: user.id });
+      setSaldoCreditos(typeof bal === "number" ? bal : 0);
 
       const [sessionsRes, riasecRes, intelRes, cnaefRes, cnaefN2Res] = await Promise.all([
         supabase
@@ -651,12 +656,17 @@ export default function Resultados() {
         <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
           <div className="h-full px-6 flex items-center justify-between">
             <div className="text-2xl font-bold text-white">POPOV</div>
-            <button
-              onClick={() => navigate("/app")}
-              className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
-            >
-              Voltar ao painel
-            </button>
+            <div className="flex items-center gap-4">
+              <span className="text-[#94A3B8] text-sm">
+                {saldoCreditos ?? 0} {saldoCreditos === 1 ? "crédito" : "créditos"}
+              </span>
+              <button
+                onClick={() => navigate("/app")}
+                className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
+              >
+                Voltar ao painel
+              </button>
+            </div>
           </div>
         </header>
 
@@ -779,6 +789,15 @@ export default function Resultados() {
           <div className="h-full px-6 flex items-center justify-between">
             <div className="text-2xl font-bold text-white">POPOV</div>
             <div className="flex items-center gap-4">
+              <span className="text-[#94A3B8] text-sm">
+                {saldoCreditos ?? 0} {saldoCreditos === 1 ? "crédito" : "créditos"}
+              </span>
+              <button
+                onClick={() => navigate("/app")}
+                className="text-white text-sm hover:underline"
+              >
+                Os meus testes
+              </button>
               <span className="text-[#94A3B8] text-sm">
                 {profile?.full_name || "Estudante"}
               </span>
@@ -1212,6 +1231,15 @@ export default function Resultados() {
         <div className="h-full px-6 flex items-center justify-between">
           <div className="text-2xl font-bold text-white">POPOV</div>
           <div className="flex items-center gap-4">
+            <span className="text-[#94A3B8] text-sm">
+              {saldoCreditos ?? 0} {saldoCreditos === 1 ? "crédito" : "créditos"}
+            </span>
+            <button
+              onClick={() => navigate("/app")}
+              className="text-white text-sm hover:underline"
+            >
+              Os meus testes
+            </button>
             <span className="text-[#94A3B8] text-sm">
               {profile?.full_name || "Estudante"}
             </span>
