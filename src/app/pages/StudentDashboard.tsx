@@ -289,7 +289,7 @@ export default function StudentDashboard() {
                           className="px-5 py-2 bg-[#2BA88C] text-white rounded-lg text-sm font-medium hover:bg-[#259178] transition-colors shrink-0"
                         >
                           {t.estado === 'concluido'
-                            ? 'Rever'
+                            ? 'Refazer'
                             : t.estado === 'a_meio'
                             ? 'Retomar'
                             : 'Começar'}
