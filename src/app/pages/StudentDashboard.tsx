@@ -105,11 +105,13 @@ export default function StudentDashboard() {
           .from('results')
           .select('generated_at, nivel')
           .in('session_id', sessionIds)
-          .order('generated_at', { ascending: false })
-          .limit(1);
+          .order('generated_at', { ascending: false });
         if (results && results.length > 0) {
-          setLastResultDate(results[0].generated_at);
-          setNivelResultado((results[0].nivel as 'sintetico' | 'completo') ?? 'sintetico');
+          // Se existe algum resultado completo, é esse que conta (já foi desbloqueado).
+          const completo = results.find((r: { nivel: string }) => r.nivel === 'completo');
+          const escolhido = completo ?? results[0];
+          setLastResultDate(escolhido.generated_at);
+          setNivelResultado((escolhido.nivel as 'sintetico' | 'completo') ?? 'sintetico');
         }
       }
 
@@ -151,6 +153,19 @@ export default function StudentDashboard() {
   // Abre um teste concreto (passa o code para o questionário correr só esse).
   const abrirTeste = (code: string) => {
     navigate(`/app/questionario?teste=${encodeURIComponent(code)}`);
+  };
+
+  // Ao clicar num teste: se está concluído, é um REFAZER -> pede confirmação
+  // (avisa que apaga o resultado anterior e cobra 1 crédito). Senão, abre direto.
+  const [refazerCode, setRefazerCode] = useState<string | null>(null);
+  const temCompleto = nivelResultado === 'completo';
+
+  const clicarTeste = (code: string, estado: Estado) => {
+    if (estado === 'concluido') {
+      setRefazerCode(code);
+    } else {
+      abrirTeste(code);
+    }
   };
 
   const estadoLabel = (e: Estado) =>
@@ -285,7 +300,7 @@ export default function StudentDashboard() {
                           </div>
                         </div>
                         <button
-                          onClick={() => abrirTeste(t.code)}
+                          onClick={() => clicarTeste(t.code, t.estado)}
                           className="px-5 py-2 bg-[#2BA88C] text-white rounded-lg text-sm font-medium hover:bg-[#259178] transition-colors shrink-0"
                         >
                           {t.estado === 'concluido'
@@ -366,6 +381,38 @@ export default function StudentDashboard() {
           )}
         </main>
       </div>
+
+      {/* MODAL: confirmar refazer um teste */}
+      {refazerCode && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E293B] rounded-xl p-8 max-w-md w-full">
+            <h3 className="text-xl font-bold text-white mb-4">Refazer este teste?</h3>
+            <p className="text-[#F1F5F9] mb-6 leading-relaxed">
+              {temCompleto
+                ? 'Vais responder de novo a este teste. O teu relatório completo atual será apagado e, para gerares um novo relatório completo, será cobrado 1 crédito.'
+                : 'Vais responder de novo a este teste. Quando gerares o relatório completo, será cobrado 1 crédito.'}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setRefazerCode(null)}
+                className="px-4 py-2 bg-[#334155] text-white rounded-lg font-medium hover:bg-[#475569] transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  const code = refazerCode;
+                  setRefazerCode(null);
+                  if (code) abrirTeste(code);
+                }}
+                className="px-4 py-2 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors"
+              >
+                Refazer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
