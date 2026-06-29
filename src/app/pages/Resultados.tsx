@@ -232,6 +232,8 @@ export default function Resultados() {
   const areaNameMapRef = useRef<Record<string, string>>({});
   const [areaDetails, setAreaDetails] = useState<Record<string, AreaDetail>>({});
   const [recalculating, setRecalculating] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+  const [unlockError, setUnlockError] = useState<string | null>(null);
 
   useEffect(() => {
     loadResults();
@@ -239,6 +241,8 @@ export default function Resultados() {
 
   useEffect(() => {
     if (!result) return;
+    // A recomendação (IA) é parte do relatório completo: não corre no sintético.
+    if (result.nivel === "sintetico") return;
     if (result.orientador_text) {
       setOrientadorText(result.orientador_text);
       return;
@@ -535,7 +539,7 @@ export default function Resultados() {
     setRecalculating(true);
     try {
       const { error: fnError } = await supabase.functions.invoke("calculate_results", {
-        body: { session_id: result.session_id },
+        body: { session_id: result.session_id, want_full: result.nivel === "completo" },
       });
       if (fnError) {
         console.error("Erro ao recalcular:", fnError);
@@ -547,6 +551,31 @@ export default function Resultados() {
       }
     } finally {
       setRecalculating(false);
+    }
+  }
+
+  // Desbloquear o relatório completo: gasta 1 crédito.
+  async function handleUnlock() {
+    if (!result) return;
+    setUnlocking(true);
+    setUnlockError(null);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("calculate_results", {
+        body: { session_id: result.session_id, want_full: true },
+      });
+      if (fnError || !data?.ok) {
+        setUnlockError("Não foi possível desbloquear agora. Tenta novamente.");
+        return;
+      }
+      if (data.necessita_credito) {
+        setUnlockError("Não tens créditos suficientes para desbloquear o relatório completo.");
+        return;
+      }
+      setOrientadorText("");
+      setErrorOrientador(null);
+      await loadResults();
+    } finally {
+      setUnlocking(false);
     }
   }
 
@@ -595,6 +624,102 @@ export default function Resultados() {
   const sortedRiasec = Object.entries(result.riasec_scores).sort((a, b) => b[1] - a[1]);
   const topRiasec = sortedRiasec[0];
   const secondRiasec = sortedRiasec[1];
+
+  // ─── RESULTADO SINTÉTICO (grátis) ────────────────────────────────────────
+  // Só pontuações por dimensão. Sem profissões, cursos, disciplinas ou texto.
+  // Não gravável. Mostra a antevisão e o botão para desbloquear o completo.
+  if (result.nivel === "sintetico") {
+    const riasecRows = Object.entries(result.riasec_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
+    const intelRows = Object.entries(result.intel_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
+    const cchSint = (result.cch_area_scores ?? {}) as Record<string, number>;
+    const cchRows = Object.entries(cchSint).sort((a, b) => Number(b[1]) - Number(a[1]));
+    const params = new URLSearchParams(window.location.search);
+    const pediuDesbloquear = params.get("desbloquear") === "1";
+
+    const Barra = ({ label, value }: { label: string; value: number }) => (
+      <div className="mb-3">
+        <div className="flex justify-between text-sm mb-1">
+          <span className="text-[#F1F5F9] break-words pr-2">{label}</span>
+          <span className="text-[#94A3B8] shrink-0">{Math.round(value)}%</span>
+        </div>
+        <div className="w-full h-2 bg-[#334155] rounded-full overflow-hidden">
+          <div className="h-full bg-[#2BA88C]" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="min-h-screen bg-[#0F172A]">
+        <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
+          <div className="h-full px-6 flex items-center justify-between">
+            <div className="text-2xl font-bold text-white">POPOV</div>
+            <button
+              onClick={() => navigate("/app")}
+              className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
+            >
+              Voltar ao painel
+            </button>
+          </div>
+        </header>
+
+        <main className="max-w-3xl mx-auto p-8">
+          <h1 className="text-2xl font-bold text-white mb-1">Resultado resumido</h1>
+          <p className="text-sm text-[#94A3B8] mb-8">
+            Este é o teu resultado gratuito, com a tua pontuação em cada dimensão. O relatório completo desbloqueia as áreas, as disciplinas, as profissões, os cursos e a orientação.
+          </p>
+
+          <section className="bg-[#1E293B] border border-[#334155] rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Os teus interesses</h2>
+            {riasecRows.map(([cod, val]) => (
+              <Barra key={cod} label={RIASEC_NAMES[cod] ?? cod} value={Number(val)} />
+            ))}
+          </section>
+
+          <section className="bg-[#1E293B] border border-[#334155] rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-semibold text-white mb-4">As tuas inteligências</h2>
+            {intelRows.map(([cod, val]) => (
+              <Barra key={cod} label={INTEL_NAMES[cod] ?? cod} value={Number(val)} />
+            ))}
+          </section>
+
+          {cchRows.length > 0 && (
+            <section className="bg-[#1E293B] border border-[#334155] rounded-lg p-6 mb-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Áreas do Secundário</h2>
+              {cchRows.map(([cod, val]) => (
+                <Barra key={cod} label={CCH_AREAS[cod]?.nome ?? cod} value={Number(val)} />
+              ))}
+            </section>
+          )}
+
+          {/* Antevisão + desbloqueio */}
+          <section className="bg-[#1E293B] border border-[#2BA88C] rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-white mb-3">O que traz o relatório completo</h2>
+            <ul className="text-sm text-[#F1F5F9] space-y-2 mb-5 list-disc pl-5">
+              <li>As áreas que mais combinam contigo, explicadas.</li>
+              <li>As disciplinas e o teu alinhamento com elas.</li>
+              <li>Profissões reais ligadas a cada área.</li>
+              <li>Cursos do Superior que abrem essas profissões.</li>
+              <li>Uma orientação escrita a partir dos teus resultados.</li>
+            </ul>
+            {unlockError && <p className="text-red-400 text-sm mb-3">{unlockError}</p>}
+            <button
+              onClick={handleUnlock}
+              disabled={unlocking}
+              className="px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors disabled:opacity-60"
+            >
+              {unlocking ? "A desbloquear..." : "Desbloquear relatório completo (1 crédito)"}
+            </button>
+            {pediuDesbloquear && !unlocking && !unlockError && (
+              <p className="text-xs text-[#94A3B8] mt-3">
+                Carrega no botão para usares 1 crédito e abrir o relatório completo.
+              </p>
+            )}
+          </section>
+        </main>
+      </div>
+    );
+  }
+
 
   const strengths = Array.isArray(result.top_strengths) ? result.top_strengths : [];
   const challenges = Array.isArray(result.top_challenges) ? result.top_challenges : [];
