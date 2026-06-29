@@ -425,6 +425,7 @@ export default function Questionario() {
 
   const [allTestsDone, setAllTestsDone] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+  const [proximoTesteCode, setProximoTesteCode] = useState<string | null>(null);
 
   // Marca este teste como concluído e avalia se a bateria do ano está completa.
   const handleComplete = async () => {
@@ -455,12 +456,13 @@ export default function Questionario() {
     const ano =
       edu.includes('3.º ciclo') || edu.includes('3º ciclo') || edu.includes('básico') ? 9 : 12;
 
-    // 3. Todos os testes do ano concluídos?
+    // 3. Todos os testes do ano concluídos? E qual o próximo por fazer?
     const { data: catalogo } = await supabase
       .from('tests')
-      .select('id')
+      .select('id, code, ordem')
       .eq('ano_alvo', ano)
-      .eq('ativo', true);
+      .eq('ativo', true)
+      .order('ordem', { ascending: true });
     const { data: prog } = await supabase
       .from('test_progress')
       .select('test_id, estado')
@@ -469,12 +471,26 @@ export default function Questionario() {
       (prog || []).filter((p: { estado: string }) => p.estado === 'concluido')
         .map((p: { test_id: string }) => p.test_id)
     );
-    const todos = (catalogo || []).length > 0 &&
-      (catalogo || []).every((t: { id: string }) => concluidos.has(t.id));
+    const lista = (catalogo || []) as { id: string; code: string; ordem: number }[];
+    const todos = lista.length > 0 && lista.every((t) => concluidos.has(t.id));
+
+    // Próximo teste por fazer (o primeiro do ano que ainda não está concluído).
+    const proximo = lista.find((t) => !concluidos.has(t.id));
+    setProximoTesteCode(proximo?.code ?? null);
 
     setAllTestsDone(todos);
     setFinalizing(false);
     setStage('conclusion');
+  };
+
+  // Vai direto para o próximo teste (fluxo em linha reta, sem passar pelo painel).
+  const irParaProximoTeste = () => {
+    if (!proximoTesteCode) {
+      navigate('/app');
+      return;
+    }
+    // Recarrega a página do questionário com o novo teste.
+    window.location.href = `/app/questionario?teste=${encodeURIComponent(proximoTesteCode)}`;
   };
 
   // Gera o resultado (sintético, grátis) e leva ao painel/resultados.
@@ -890,13 +906,13 @@ export default function Questionario() {
                 ) : (
                   <>
                     <p className="text-base text-[#F1F5F9] leading-relaxed mb-6">
-                      As tuas respostas foram guardadas. Ainda falta um teste para veres os teus resultados.
+                      As tuas respostas foram guardadas. Falta um teste para veres os teus resultados. Vamos a ele.
                     </p>
                     <button
-                      onClick={() => navigate('/app')}
+                      onClick={irParaProximoTeste}
                       className="w-full px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors"
                     >
-                      Voltar ao painel e fazer o próximo teste
+                      Fazer o próximo teste
                     </button>
                   </>
                 )}
