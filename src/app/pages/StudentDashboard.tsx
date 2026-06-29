@@ -139,7 +139,7 @@ export default function StudentDashboard() {
   const cards: CardConfig[] = [
     { id: 'intro', title: 'Sobre ti', icon: Info, locked: false },
     { id: 'assessment', title: 'Os teus testes', icon: ClipboardList, locked: !introVisited },
-    { id: 'results', title: 'Os teus resultados', icon: BarChart3, locked: !hasResults },
+    { id: 'results', title: 'Os teus resultados', icon: BarChart3, locked: !todosConcluidos || !hasResults },
   ];
 
   const handleCardClick = (cardId: CardId) => {
@@ -334,8 +334,12 @@ export default function StudentDashboard() {
             <div>
               <h2 className="text-2xl font-bold text-white mb-6">Os teus resultados</h2>
 
-              {!hasResults ? (
-                <p className="text-[#94A3B8]">Ainda não concluíste os teus testes.</p>
+              {!todosConcluidos ? (
+                <p className="text-[#94A3B8]">
+                  Ainda tens testes por terminar. Conclui todos os testes para veres os teus resultados.
+                </p>
+              ) : !hasResults ? (
+                <p className="text-[#94A3B8]">Conclui os testes para gerar os teus resultados.</p>
               ) : (
                 <div className="bg-[#1E293B] border border-[#334155] rounded-lg p-6">
                   {lastResultDate && (
