@@ -631,8 +631,6 @@ export default function Resultados() {
   if (result.nivel === "sintetico") {
     const riasecRows = Object.entries(result.riasec_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
     const intelRows = Object.entries(result.intel_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
-    const cchSint = (result.cch_area_scores ?? {}) as Record<string, number>;
-    const cchRows = Object.entries(cchSint).sort((a, b) => Number(b[1]) - Number(a[1]));
     const params = new URLSearchParams(window.location.search);
     const pediuDesbloquear = params.get("desbloquear") === "1";
 
@@ -681,15 +679,6 @@ export default function Resultados() {
               <Barra key={cod} label={INTEL_NAMES[cod] ?? cod} value={Number(val)} />
             ))}
           </section>
-
-          {cchRows.length > 0 && (
-            <section className="bg-[#1E293B] border border-[#334155] rounded-lg p-6 mb-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Áreas do Secundário</h2>
-              {cchRows.map(([cod, val]) => (
-                <Barra key={cod} label={CCH_AREAS[cod]?.nome ?? cod} value={Number(val)} />
-              ))}
-            </section>
-          )}
 
           {/* Antevisão + desbloqueio */}
           <section className="bg-[#1E293B] border border-[#2BA88C] rounded-lg p-6">
