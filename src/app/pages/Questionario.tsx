@@ -83,6 +83,14 @@ export default function Questionario() {
   const [resultMode, setResultMode] = useState<'3ciclo' | 'secundario'>('secundario');
   const [sessionId, setSessionId] = useState<string | null>(null);
 
+  // Qual teste corre nesta sessão de ecrã: 'interesses' ou 'inteligencias'.
+  // Vem do parâmetro ?teste=<code> que o painel passa (ex.: interesses_9).
+  const testeParam = new URLSearchParams(window.location.search).get('teste') || '';
+  const tipoTeste: 'interesses' | 'inteligencias' = testeParam.startsWith('inteligencias')
+    ? 'inteligencias'
+    : 'interesses';
+  const [testRowId, setTestRowId] = useState<string | null>(null);
+
   const [interestItems, setInterestItems] = useState<InterestItem[]>([]);
   const [intelligenceItems, setIntelligenceItems] = useState<IntelligenceItem[]>([]);
 
@@ -102,7 +110,8 @@ export default function Questionario() {
 
   const TOTAL_INTEREST = 47;
   const TOTAL_INTELLIGENCE = 28;
-  const TOTAL_QUESTIONS = TOTAL_INTEREST + TOTAL_INTELLIGENCE;
+  // Total do teste a correr (não a soma dos dois).
+  const TOTAL_QUESTIONS = tipoTeste === 'interesses' ? TOTAL_INTEREST : TOTAL_INTELLIGENCE;
 
   useEffect(() => {
     if (!user) return;
@@ -187,25 +196,54 @@ export default function Questionario() {
       setInterestAnswers(intAnswersMap);
       setIntelligenceAnswers(intelAnswersMap);
 
-      // 5. Determinar etapa e posição atual
+      // 5. Determinar etapa e posição, conforme o teste a correr
       const intCount = Object.keys(intAnswersMap).length;
       const intelCount = Object.keys(intelAnswersMap).length;
 
-      if (intCount === 0 && intelCount === 0) {
-        // Nenhuma resposta — escolher tipo (se ainda não escolhido) ou intro
-        setStage(existingMode ? 'intro1' : 'selectType');
-      } else if (intCount < TOTAL_INTEREST) {
-        // Etapa 1 parcial
-        setStage('stage1');
-      } else if (intelCount === 0) {
-        // Etapa 1 completa, Etapa 2 não iniciada
-        setStage('transition');
-      } else if (intelCount < TOTAL_INTELLIGENCE) {
-        // Etapa 2 parcial
-        setStage('stage2');
+      // Resolve o id do teste no catálogo e marca-o a_meio (se ainda não concluído).
+      let resolvedTestId: string | null = null;
+      if (testeParam) {
+        const { data: tRow } = await supabase
+          .from('tests')
+          .select('id')
+          .eq('code', testeParam)
+          .single();
+        resolvedTestId = tRow?.id ?? null;
+        setTestRowId(resolvedTestId);
+
+        if (resolvedTestId) {
+          const { data: prog } = await supabase
+            .from('test_progress')
+            .select('estado')
+            .eq('user_id', user.id)
+            .eq('test_id', resolvedTestId)
+            .maybeSingle();
+          // Só passa a a_meio se não estiver já concluído (rever não baixa o estado).
+          if (!prog || prog.estado !== 'concluido') {
+            await supabase.from('test_progress').upsert(
+              {
+                user_id: user.id,
+                test_id: resolvedTestId,
+                session_id: currentSessionId,
+                estado: 'a_meio',
+                iniciado_em: new Date().toISOString(),
+              },
+              { onConflict: 'user_id,test_id' }
+            );
+          }
+        }
+      }
+
+      if (tipoTeste === 'interesses') {
+        // Corre só o teste de interesses
+        if (existingMode || resultMode) {
+          setStage(intCount < TOTAL_INTEREST ? 'stage1' : 'conclusion');
+        } else {
+          setStage('selectType');
+        }
       } else {
-        // Todas respondidas
-        setStage('conclusion');
+        // Corre só o teste de inteligências
+        setStage(intelCount < TOTAL_INTELLIGENCE ? 'stage2' : 'conclusion');
       }
 
       setLoading(false);
@@ -318,8 +356,8 @@ export default function Questionario() {
       if (nextUnanswered) {
         scrollToQuestion(`interest-${nextUnanswered.cod}`);
       } else {
-        // Todas respondidas - ir para transição
-        setStage('transition');
+        // Todas as de interesses respondidas - concluir este teste
+        setStage('conclusion');
       }
     }, 100);
   };
@@ -353,33 +391,91 @@ export default function Questionario() {
     }, 100);
   };
 
-  const handleComplete = async () => {
-    if (!sessionId) return;
+  const [allTestsDone, setAllTestsDone] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
 
+  // Marca este teste como concluído e avalia se a bateria do ano está completa.
+  const handleComplete = async () => {
+    if (!sessionId || !user) return;
+    setFinalizing(true);
+
+    // 1. Marca o teste atual como concluído.
+    if (testRowId) {
+      await supabase.from('test_progress').upsert(
+        {
+          user_id: user.id,
+          test_id: testRowId,
+          session_id: sessionId,
+          estado: 'concluido',
+          concluido_em: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,test_id' }
+      );
+    }
+
+    // 2. Ano-alvo a partir da escolaridade (mesma regra do painel).
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('education_level')
+      .eq('id', user.id)
+      .single();
+    const edu = (prof?.education_level ?? '').toLowerCase();
+    const ano =
+      edu.includes('3.º ciclo') || edu.includes('3º ciclo') || edu.includes('básico') ? 9 : 12;
+
+    // 3. Todos os testes do ano concluídos?
+    const { data: catalogo } = await supabase
+      .from('tests')
+      .select('id')
+      .eq('ano_alvo', ano)
+      .eq('ativo', true);
+    const { data: prog } = await supabase
+      .from('test_progress')
+      .select('test_id, estado')
+      .eq('user_id', user.id);
+    const concluidos = new Set(
+      (prog || []).filter((p: { estado: string }) => p.estado === 'concluido')
+        .map((p: { test_id: string }) => p.test_id)
+    );
+    const todos = (catalogo || []).length > 0 &&
+      (catalogo || []).every((t: { id: string }) => concluidos.has(t.id));
+
+    setAllTestsDone(todos);
+    setFinalizing(false);
+    setStage('conclusion');
+  };
+
+  // Gera o resultado (sintético, grátis) e leva ao painel/resultados.
+  const handleGenerateResult = async () => {
+    if (!sessionId) return;
     setCalculatingResults(true);
     setCalculationError(null);
 
-    // Atualizar status da sessão
     await supabase
       .from('assessment_sessions')
       .update({ status: 'completed', completed_at: new Date().toISOString() })
       .eq('id', sessionId);
 
-    // Chamar Edge Function
     const { data, error } = await supabase.functions.invoke('calculate_results', {
-      body: { session_id: sessionId }
+      body: { session_id: sessionId, want_full: false },
     });
 
     if (error || !data?.ok) {
-      // Edge Function ainda não existe (Bloco 7)
-      setCalculationError('Função de cálculo ainda não disponível. Será implementada no próximo bloco.');
+      setCalculationError('Não foi possível calcular agora. Tenta novamente dentro de momentos.');
       setCalculatingResults(false);
       return;
     }
-
-    // Sucesso - redirecionar
     navigate('/app/resultados');
   };
+
+  // Quando o teste chega à conclusão, marca-o concluído e avalia a bateria.
+  const completedRef = useRef(false);
+  useEffect(() => {
+    if (stage === 'conclusion' && !completedRef.current) {
+      completedRef.current = true;
+      handleComplete();
+    }
+  }, [stage]);
 
   const handleBackToDashboard = () => {
     const totalAnswered = Object.keys(interestAnswers).length + Object.keys(intelligenceAnswers).length;
@@ -397,7 +493,9 @@ export default function Questionario() {
   };
 
   const getTotalAnswered = () => {
-    return Object.keys(interestAnswers).length + Object.keys(intelligenceAnswers).length;
+    return tipoTeste === 'interesses'
+      ? Object.keys(interestAnswers).length
+      : Object.keys(intelligenceAnswers).length;
   };
 
   const getActiveQuestionKey = (): string | null => {
@@ -730,21 +828,46 @@ export default function Questionario() {
             </div>
           )}
 
-          {/* TELA DE CONCLUSÃO */}
+          {/* TELA DE CONCLUSÃO DO TESTE */}
           {stage === 'conclusion' && (
             <div className="flex items-center justify-center min-h-[70vh]">
               <div className="bg-[#1E293B] rounded-xl p-10 max-w-2xl w-full">
-                <h2 className="text-2xl font-bold text-white mb-6">Concluíste a tua avaliação</h2>
-                <p className="text-base text-[#F1F5F9] leading-relaxed mb-6">
-                  As tuas respostas foram guardadas. Agora vamos calcular os teus resultados.
-                </p>
-                <button
-                  onClick={handleComplete}
-                  className="w-full px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors flex items-center justify-center gap-2"
-                >
-                  <Check size={18} />
-                  Concluir e ver resultados
-                </button>
+                <div className="flex items-center gap-2 mb-6">
+                  <Check size={22} className="text-[#2BA88C]" />
+                  <h2 className="text-2xl font-bold text-white">Teste concluído</h2>
+                </div>
+
+                {finalizing ? (
+                  <p className="text-[#94A3B8]">A guardar...</p>
+                ) : allTestsDone ? (
+                  <>
+                    <p className="text-base text-[#F1F5F9] leading-relaxed mb-6">
+                      Concluíste todos os testes. Já podes ver os teus resultados.
+                    </p>
+                    {calculationError && (
+                      <p className="text-red-400 text-sm mb-4">{calculationError}</p>
+                    )}
+                    <button
+                      onClick={handleGenerateResult}
+                      disabled={calculatingResults}
+                      className="w-full px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                    >
+                      {calculatingResults ? 'A calcular...' : 'Ver os meus resultados'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-base text-[#F1F5F9] leading-relaxed mb-6">
+                      As tuas respostas foram guardadas. Ainda falta um teste para veres os teus resultados.
+                    </p>
+                    <button
+                      onClick={() => navigate('/app')}
+                      className="w-full px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors"
+                    >
+                      Voltar ao painel e fazer o próximo teste
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}
