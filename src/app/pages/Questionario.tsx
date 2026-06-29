@@ -117,19 +117,18 @@ export default function Questionario() {
     if (!user) return;
 
     const initQuestionario = async () => {
-      // 1. Buscar sessão in_progress
+      // 1. A pessoa deve ter SEMPRE uma só sessão. Busca a última (qualquer estado).
       const { data: sessions } = await supabase
         .from('assessment_sessions')
         .select('*')
         .eq('student_id', user.id)
-        .eq('status', 'in_progress')
         .order('started_at', { ascending: false })
         .limit(1);
 
       let currentSessionId: string;
       let existingMode: string | null = null;
 
-      // 2. Se não existe, criar nova
+      // 2. Só cria nova se a pessoa NUNCA teve sessão (evita sessões duplicadas).
       if (!sessions || sessions.length === 0) {
         const { data: newSession } = await supabase
           .from('assessment_sessions')
@@ -140,6 +139,7 @@ export default function Questionario() {
         currentSessionId = newSession!.id;
         existingMode = (newSession as { result_mode?: string | null })?.result_mode ?? null;
       } else {
+        // Reusa a sessão existente (mesma para responder, retomar e refazer).
         currentSessionId = sessions[0].id;
         existingMode = (sessions[0] as { result_mode?: string | null })?.result_mode ?? null;
       }
@@ -223,9 +223,12 @@ export default function Questionario() {
         }
       }
 
-      // REFAZER: teste já concluído -> limpa respostas, reabre a sessão
-      // (o gatilho invalida o resultado completo), e recomeça do início.
+      // REFAZER: teste já concluído -> arquiva o resultado completo (histórico),
+      // limpa respostas, reabre a sessão (invalida o completo), recomeça do início.
       if (estaConcluido && resolvedTestId) {
+        // Guarda o completo antigo no histórico antes de o perder.
+        await supabase.rpc('arquivar_resultado', { p_session: currentSessionId });
+
         if (tipoTeste === 'interesses') {
           await supabase.from('interest_answers').delete().eq('session_id', currentSessionId);
           setInterestAnswers({});
