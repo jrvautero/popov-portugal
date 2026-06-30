@@ -6,13 +6,13 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import StudentDashboard from './pages/StudentDashboard';
 import Questionario from './pages/Questionario';
+import QuestionarioPersonalidade from './pages/QuestionarioPersonalidade';
 import Perfil from './pages/Perfil';
 import Resultados from './pages/Resultados';
 import CounselorDashboard from './pages/CounselorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminImport from './pages/AdminImport';
 import { ProtectedRoute } from './components/ProtectedRoute';
-
 export default function App() {
   return (
     <BrowserRouter>
@@ -35,6 +35,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['student']}>
               <Questionario />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/questionario-personalidade"
+          element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <QuestionarioPersonalidade />
             </ProtectedRoute>
           }
         />
