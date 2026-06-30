@@ -179,10 +179,14 @@ export default function StudentDashboard() {
   // tê-la deixado 'in_progress') e navega para o destino dado.
   const garantirSessaoEIr = async (target: string) => {
     if (resultSessionId) {
-      await supabase
+      const { error } = await supabase
         .from('assessment_sessions')
         .update({ status: 'completed', completed_at: new Date().toISOString() })
         .eq('id', resultSessionId);
+      if (error) {
+        setGerarErro('Erro ao atualizar sessão: ' + JSON.stringify(error));
+        return;
+      }
     }
     navigate(target);
   };
