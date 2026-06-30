@@ -544,7 +544,7 @@ export default function Resultados() {
     setRecalculating(true);
     try {
       const { error: fnError } = await supabase.functions.invoke("calculate_results", {
-        body: { session_id: result.session_id, want_full: result.nivel === "completo" },
+        body: { session_id: result.session_id, modo: "recalcular" },
       });
       if (fnError) {
         console.error("Erro ao recalcular:", fnError);
@@ -566,7 +566,7 @@ export default function Resultados() {
     setUnlockError(null);
     try {
       const { data, error: fnError } = await supabase.functions.invoke("calculate_results", {
-        body: { session_id: result.session_id, want_full: true },
+        body: { session_id: result.session_id, modo: "desbloquear" },
       });
       if (fnError || !data?.ok) {
         setUnlockError("Não foi possível desbloquear agora. Tenta novamente.");
