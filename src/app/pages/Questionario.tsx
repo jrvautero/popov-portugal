@@ -233,6 +233,7 @@ export default function Questionario() {
         // Apaga as respostas DOS DOIS testes.
         await supabase.from('interest_answers').delete().eq('session_id', currentSessionId);
         await supabase.from('intelligence_answers').delete().eq('session_id', currentSessionId);
+        await supabase.from('personality_responses').delete().eq('session_id', currentSessionId);
         setInterestAnswers({});
         setIntelligenceAnswers({});
         intCount = 0;
@@ -509,7 +510,9 @@ export default function Questionario() {
       return;
     }
     // Recarrega a página do questionário com o novo teste.
-    window.location.href = `/app/questionario?teste=${encodeURIComponent(proximoTesteCode)}`;
+    window.location.href = proximoTesteCode.startsWith('personalidade')
+      ? `/app/questionario-personalidade?teste=${encodeURIComponent(proximoTesteCode)}`
+      : `/app/questionario?teste=${encodeURIComponent(proximoTesteCode)}`;
   };
 
   // Gera o resultado (sintético, grátis) e leva ao painel/resultados.
