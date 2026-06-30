@@ -208,7 +208,17 @@ export default function StudentDashboard() {
     });
 
     if (error || !data?.ok) {
-      const det = (data as { detalhe?: string })?.detalhe ?? error?.message ?? '';
+      let det = '';
+      try {
+        const ctx = (error as { context?: Response })?.context;
+        if (ctx && typeof ctx.json === 'function') {
+          const body = await ctx.json();
+          det = body?.detalhe || body?.error || '';
+        }
+      } catch {
+        det = '';
+      }
+      if (!det) det = (data as { detalhe?: string })?.detalhe ?? error?.message ?? '';
       setGerarErro('Erro ao gerar: ' + det);
       setGerando(false);
       return;
