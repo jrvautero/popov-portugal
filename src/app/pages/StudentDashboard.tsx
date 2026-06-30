@@ -154,7 +154,11 @@ export default function StudentDashboard() {
 
   // Abre um teste concreto (passa o code para o questionário correr só esse).
   const abrirTeste = (code: string) => {
-    navigate(`/app/questionario?teste=${encodeURIComponent(code)}`);
+    navigate(
+      code.startsWith('personalidade')
+        ? `/app/questionario-personalidade?teste=${encodeURIComponent(code)}`
+        : `/app/questionario?teste=${encodeURIComponent(code)}`
+    );
   };
 
   // Ao clicar num teste: se está concluído, é um REFAZER -> pede confirmação
