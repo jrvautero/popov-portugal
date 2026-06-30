@@ -198,10 +198,15 @@ export default function StudentDashboard() {
     }
 
     // Marca a sessão como concluída e gera o sintético (grátis).
-    await supabase
+    const { error: updSessErr } = await supabase
       .from('assessment_sessions')
       .update({ status: 'completed', completed_at: new Date().toISOString() })
       .eq('id', sid);
+    if (updSessErr) {
+      setGerarErro('Erro ao atualizar sessão: ' + JSON.stringify(updSessErr));
+      setGerando(false);
+      return;
+    }
 
     const { data, error } = await supabase.functions.invoke('calculate_results', {
       body: { session_id: sid, modo: 'sintetico' },
