@@ -48,6 +48,7 @@ export default function StudentDashboard() {
   const [saldo, setSaldo] = useState<number>(0);
   const [nivelResultado, setNivelResultado] = useState<'sintetico' | 'completo' | null>(null);
   const [lastResultDate, setLastResultDate] = useState<string | null>(null);
+  const [resultSessionId, setResultSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -103,7 +104,7 @@ export default function StudentDashboard() {
         const sessionIds = allSessions.map((s: { id: string }) => s.id);
         const { data: results } = await supabase
           .from('results')
-          .select('generated_at, nivel')
+          .select('session_id, generated_at, nivel')
           .in('session_id', sessionIds)
           .order('generated_at', { ascending: false });
         if (results && results.length > 0) {
@@ -112,6 +113,7 @@ export default function StudentDashboard() {
           const escolhido = completo ?? results[0];
           setLastResultDate(escolhido.generated_at);
           setNivelResultado((escolhido.nivel as 'sintetico' | 'completo') ?? 'sintetico');
+          setResultSessionId(escolhido.session_id);
         }
       }
 
@@ -173,11 +175,24 @@ export default function StudentDashboard() {
   const [gerando, setGerando] = useState(false);
   const [gerarErro, setGerarErro] = useState<string | null>(null);
 
+  // Garante que a sessão do resultado está 'completed' (um Refazer anterior pode
+  // tê-la deixado 'in_progress') e navega para o destino dado.
+  const garantirSessaoEIr = async (target: string) => {
+    if (resultSessionId) {
+      await supabase
+        .from('assessment_sessions')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .eq('id', resultSessionId)
+        .neq('status', 'completed');
+    }
+    navigate(target);
+  };
+
   const gerarEIrParaResultados = async () => {
     if (!user) return;
-    // Já existe resultado -> navega direto.
+    // Já existe resultado -> garante sessão 'completed' e navega.
     if (hasResults) {
-      navigate('/app/resultados');
+      await garantirSessaoEIr('/app/resultados');
       return;
     }
     setGerando(true);
@@ -415,7 +430,7 @@ export default function StudentDashboard() {
 
                   {nivelResultado === 'completo' ? (
                     <button
-                      onClick={() => navigate('/app/resultados')}
+                      onClick={() => garantirSessaoEIr('/app/resultados')}
                       className="px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors"
                     >
                       Ver relatório completo
@@ -430,13 +445,13 @@ export default function StudentDashboard() {
                       </p>
                       <div className="flex flex-wrap gap-3">
                         <button
-                          onClick={() => navigate('/app/resultados')}
+                          onClick={() => garantirSessaoEIr('/app/resultados')}
                           className="px-6 py-3 bg-[#334155] text-white rounded-lg font-medium hover:bg-[#475569] transition-colors"
                         >
                           Ver resultado resumido
                         </button>
                         <button
-                          onClick={() => navigate('/app/resultados?desbloquear=1')}
+                          onClick={() => garantirSessaoEIr('/app/resultados?desbloquear=1')}
                           className="px-6 py-3 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors"
                         >
                           {saldo > 0 ? 'Desbloquear relatório completo (1 crédito)' : 'Obter créditos'}
