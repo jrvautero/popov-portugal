@@ -208,7 +208,8 @@ export default function StudentDashboard() {
     });
 
     if (error || !data?.ok) {
-      setGerarErro('Não foi possível gerar agora. Tenta novamente dentro de momentos.');
+      const det = (data as { detalhe?: string })?.detalhe ?? error?.message ?? '';
+      setGerarErro('Erro ao gerar: ' + det);
       setGerando(false);
       return;
     }
