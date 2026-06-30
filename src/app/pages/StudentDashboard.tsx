@@ -168,6 +168,53 @@ export default function StudentDashboard() {
     }
   };
 
+  // Gera o resultado sintético (se ainda não existir) e vai para os resultados.
+  // Determinista: se já há resultado, navega direto; senão gera primeiro.
+  const [gerando, setGerando] = useState(false);
+  const [gerarErro, setGerarErro] = useState<string | null>(null);
+
+  const gerarEIrParaResultados = async () => {
+    if (!user) return;
+    // Já existe resultado -> navega direto.
+    if (hasResults) {
+      navigate('/app/resultados');
+      return;
+    }
+    setGerando(true);
+    setGerarErro(null);
+
+    // Última sessão da pessoa.
+    const { data: sess } = await supabase
+      .from('assessment_sessions')
+      .select('id')
+      .eq('student_id', user.id)
+      .order('started_at', { ascending: false })
+      .limit(1);
+    const sid = sess && sess.length > 0 ? sess[0].id : null;
+    if (!sid) {
+      setGerarErro('Não foi possível encontrar a tua sessão.');
+      setGerando(false);
+      return;
+    }
+
+    // Marca a sessão como concluída e gera o sintético (grátis).
+    await supabase
+      .from('assessment_sessions')
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
+      .eq('id', sid);
+
+    const { data, error } = await supabase.functions.invoke('calculate_results', {
+      body: { session_id: sid, modo: 'sintetico' },
+    });
+
+    if (error || !data?.ok) {
+      setGerarErro('Não foi possível gerar agora. Tenta novamente dentro de momentos.');
+      setGerando(false);
+      return;
+    }
+    navigate('/app/resultados');
+  };
+
   const estadoLabel = (e: Estado) =>
     e === 'concluido' ? 'Concluído' : e === 'a_meio' ? 'Incompleto' : 'Por fazer';
 
@@ -319,11 +366,13 @@ export default function StudentDashboard() {
                 <div className="mt-6 bg-[#1E293B] border border-[#2BA88C] rounded-lg p-5">
                   <p className="text-white mb-3">Concluíste todos os testes. Já podes ver os teus resultados.</p>
                   <button
-                    onClick={() => setSelectedCard('results')}
-                    className="px-6 py-2 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors"
+                    onClick={gerarEIrParaResultados}
+                    disabled={gerando}
+                    className="px-6 py-2 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors disabled:opacity-60"
                   >
-                    Ir para os resultados
+                    {gerando ? 'A gerar...' : 'Ir para os resultados'}
                   </button>
+                  {gerarErro && <p className="text-red-400 text-sm mt-3">{gerarErro}</p>}
                 </div>
               )}
             </div>
