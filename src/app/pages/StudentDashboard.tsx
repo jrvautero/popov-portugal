@@ -182,8 +182,7 @@ export default function StudentDashboard() {
       await supabase
         .from('assessment_sessions')
         .update({ status: 'completed', completed_at: new Date().toISOString() })
-        .eq('id', resultSessionId)
-        .neq('status', 'completed');
+        .eq('id', resultSessionId);
     }
     navigate(target);
   };
