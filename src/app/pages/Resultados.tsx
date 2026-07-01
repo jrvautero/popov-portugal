@@ -288,6 +288,8 @@ export default function Resultados() {
   const [unlocking, setUnlocking] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [saldoCreditos, setSaldoCreditos] = useState<number | null>(null);
+  const [indice, setIndice] = useState<{ id: string; label: string }[]>([]);
+  const [activeSection, setActiveSection] = useState<string>("");
 
   useEffect(() => {
     loadResults();
@@ -334,6 +336,27 @@ export default function Resultados() {
     }
     generateOrientador();
   }, [result]);
+
+  // Índice lateral: construído a partir das secções realmente presentes no DOM
+  // (marcadas com data-idx-label) e destaque da secção visível ao rolar.
+  useEffect(() => {
+    if (loading || !result) return;
+    const els = Array.from(document.querySelectorAll<HTMLElement>("[data-idx-label]"));
+    setIndice(els.map((el) => ({ id: el.id, label: el.dataset.idxLabel || "" })));
+    if (els.length === 0) return;
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visiveis = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visiveis[0]) setActiveSection((visiveis[0].target as HTMLElement).id);
+      },
+      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [loading, result]);
 
   async function loadResults() {
     setLoading(true);
@@ -662,6 +685,34 @@ export default function Resultados() {
   // ─── RESULTADO SINTÉTICO (grátis) ────────────────────────────────────────
   // Só pontuações por dimensão. Sem profissões, cursos, disciplinas ou texto.
   // Não gravável. Mostra a antevisão e o botão para desbloquear o completo.
+  const renderIndice = () => {
+    if (indice.length === 0) return null;
+    return (
+      <aside className="hidden lg:block w-56 shrink-0">
+        <div className="sticky top-20 p-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8] mb-3">Secções</h3>
+          <nav className="space-y-1">
+            {indice.map((it) => (
+              <button
+                key={it.id}
+                onClick={() =>
+                  document.getElementById(it.id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className={`block w-full text-left text-sm rounded-md px-3 py-1.5 transition-colors ${
+                  activeSection === it.id
+                    ? "text-[#2BA88C] bg-[rgba(43,168,140,0.08)] font-medium"
+                    : "text-[#94A3B8] hover:text-white"
+                }`}
+              >
+                {it.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </aside>
+    );
+  };
+
   const secaoPersonalidade = (completo: boolean) => {
     const ps = result.personality_scores;
     if (!ps || Object.keys(ps).length === 0) return null;
@@ -694,7 +745,7 @@ export default function Resultados() {
     }
 
     return (
-      <section className="bg-[#1E293B] rounded-xl overflow-hidden mt-6">
+      <section id="sec-personalidade" data-idx-label="Personalidade" className="bg-[#1E293B] rounded-xl overflow-hidden mt-6 scroll-mt-24">
         <div className="h-1.5 bg-[#2BA88C]" />
         <div className="p-8">
           <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">A tua personalidade</h2>
@@ -938,6 +989,9 @@ export default function Resultados() {
           </div>
         </header>
 
+        <div className="flex">
+          {renderIndice()}
+          <div className="flex-1 min-w-0">
         <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
           {/* Hero */}
           <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-8 space-y-2">
@@ -1024,7 +1078,7 @@ export default function Resultados() {
           </section>
 
           {/* Detalhe por área */}
-          <section className="space-y-6">
+          <section id="sec9-areas" data-idx-label="Áreas" className="space-y-6 scroll-mt-24">
             {ordered.map(([code, score], i) => {
               const meta = CCH_AREAS[code];
               const det = detailed[code];
@@ -1174,7 +1228,7 @@ export default function Resultados() {
           </section>
 
           {/* As tuas inteligências */}
-          <section className="bg-[#1E293B] rounded-xl p-8 space-y-8">
+          <section id="sec9-inteligencias" data-idx-label="Inteligências" className="bg-[#1E293B] rounded-xl p-8 space-y-8 scroll-mt-24">
             <div className="flex items-center gap-3">
               <Calculator style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
               <h2 className="text-2xl font-bold text-[#F1F5F9]">As tuas inteligências</h2>
@@ -1293,7 +1347,7 @@ export default function Resultados() {
           </section>
 
           {/* A tua recomendação */}
-          <section className="bg-[#1E293B] rounded-xl overflow-hidden">
+          <section id="sec9-recomendacao" data-idx-label="Recomendação" className="bg-[#1E293B] rounded-xl overflow-hidden scroll-mt-24">
             <div className="h-1.5 bg-[#2BA88C]" />
             <div className="p-8">
               <div className="flex items-center gap-3 mb-3">
@@ -1335,6 +1389,8 @@ export default function Resultados() {
             contigo e as provas de ingresso e disciplinas que lhes dão acesso no Secundário.
           </p>
         </main>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1391,6 +1447,9 @@ export default function Resultados() {
         </div>
       </header>
 
+      <div className="flex">
+        {renderIndice()}
+        <div className="flex-1 min-w-0">
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
         {/* Hero */}
         <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-8 space-y-2">
@@ -1418,7 +1477,7 @@ export default function Resultados() {
         </section>
 
         {/* RIASEC */}
-        <section className="bg-[#1E293B] rounded-xl p-8">
+        <section id="sec-interesses" data-idx-label="Interesses" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-[#94A3B8] mb-6">
             Perfil de interesses RIASEC
           </h2>
@@ -1495,7 +1554,7 @@ export default function Resultados() {
         </section>
 
         {/* Inteligências — Pontos Fortes e Desafios */}
-        <section className="bg-[#1E293B] rounded-xl p-8">
+        <section id="sec-inteligencias" data-idx-label="Pontos fortes" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
           <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
 
             {/* Coluna esquerda — títulos descritivos */}
@@ -1635,7 +1694,7 @@ export default function Resultados() {
           };
 
           return (
-            <section className="bg-[#1E293B] rounded-xl p-8">
+            <section id="sec-itinerarios" data-idx-label="Itinerários" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
               <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
 
                 {/* Coluna esquerda */}
@@ -1732,7 +1791,7 @@ export default function Resultados() {
 
         {/* Profissões */}
         {topOccupations.length > 0 && (
-          <section className="space-y-4">
+          <section id="sec-profissoes" data-idx-label="Profissões" className="space-y-4 scroll-mt-24">
             <h2 className="text-sm font-semibold uppercase tracking-widest text-[#94A3B8]">
               Profissões com maior afinidade
             </h2>
@@ -1799,7 +1858,7 @@ export default function Resultados() {
           if (derivedTop3.length === 0) return null;
 
           return (
-            <section className="space-y-16">
+            <section id="sec-areas" data-idx-label="Áreas" className="space-y-16 scroll-mt-24">
               {derivedTop3.map(([cod]) => {
                 const Icon = CNAEF_ICONS[cod] ?? BookOpen;
                 const areaName = areaNameMapRef.current[cod];
@@ -1957,7 +2016,7 @@ export default function Resultados() {
           if (derivedTop3.length === 0) return null;
 
           return (
-            <section className="bg-[#1E293B] rounded-xl overflow-hidden">
+            <section id="sec-caminho" data-idx-label="Caminho" className="bg-[#1E293B] rounded-xl overflow-hidden scroll-mt-24">
               <div className="h-1.5 bg-[#2BA88C]" />
               <div className="p-6">
                 {/* Cabeçalho */}
@@ -2090,7 +2149,7 @@ export default function Resultados() {
         })()}
 
         {/* A Tua Recomendação */}
-        <section className="bg-[#1E293B] rounded-xl overflow-hidden">
+        <section id="sec-recomendacao" data-idx-label="Recomendação" className="bg-[#1E293B] rounded-xl overflow-hidden scroll-mt-24">
           <div className="h-1.5 bg-[#2BA88C]" />
           <div className="p-8">
             <div className="flex items-center gap-3 mb-3">
@@ -2129,6 +2188,8 @@ export default function Resultados() {
 
         {secaoPersonalidade(true)}
       </main>
+        </div>
+      </div>
     </div>
   );
 }
