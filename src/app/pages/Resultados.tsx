@@ -685,6 +685,34 @@ export default function Resultados() {
   // ─── RESULTADO SINTÉTICO (grátis) ────────────────────────────────────────
   // Só pontuações por dimensão. Sem profissões, cursos, disciplinas ou texto.
   // Não gravável. Mostra a antevisão e o botão para desbloquear o completo.
+  const renderIndiceMobile = () => {
+    if (indice.length === 0) return null;
+    return (
+      <div className="lg:hidden sticky top-16 z-40 bg-[#0F172A] border-b border-[#334155] overflow-x-auto">
+        <div className="flex gap-2 px-4 py-2 w-max">
+          {indice.map((it) => {
+            const ativo = activeSection === it.id;
+            return (
+              <button
+                key={it.id}
+                onClick={() =>
+                  document.getElementById(it.id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className={`whitespace-nowrap text-sm rounded-full px-3 py-1 border transition-colors ${
+                  ativo
+                    ? "border-[#2BA88C] text-[#2BA88C] bg-[rgba(43,168,140,0.1)] font-medium"
+                    : "border-[#334155] text-[#94A3B8]"
+                }`}
+              >
+                {it.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const renderIndice = () => {
     if (indice.length === 0) return null;
     return (
@@ -1010,6 +1038,7 @@ export default function Resultados() {
         <div className="flex">
           {renderIndice()}
           <div className="flex-1 min-w-0">
+        {renderIndiceMobile()}
         <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
           {/* Hero */}
           <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-8 space-y-2">
@@ -1468,6 +1497,7 @@ export default function Resultados() {
       <div className="flex">
         {renderIndice()}
         <div className="flex-1 min-w-0">
+      {renderIndiceMobile()}
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
         {/* Hero */}
         <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-8 space-y-2">
