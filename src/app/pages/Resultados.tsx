@@ -193,7 +193,60 @@ interface ResultData {
   top3_areas: string[];
   generated_at: string;
   orientador_text?: string;
+  personality_scores?: Record<string, { media: number; pct: number; banda: string }> | null;
+  sintese_personalidade?: string | null;
 }
+
+const FATOR_NOMES: Record<string, string> = {
+  E: "Extroversão",
+  A: "Amabilidade",
+  C: "Conscienciosidade",
+  N: "Neuroticismo",
+  I: "Intelecto / Abertura",
+};
+const FATOR_ORDEM = ["E", "A", "C", "N", "I"];
+const PERS_DESCRICOES: Record<string, Record<string, string>> = {
+  E: {
+    Elevado:
+      "Pessoa sociável, expressiva e enérgica; procura o convívio, fala com facilidade em grupo, sente-se à vontade a iniciar contactos e tende a liderar interações.",
+    Médio:
+      "Equilíbrio entre convívio e recolhimento; sociável em certos contextos, reservada noutros.",
+    Baixo:
+      "Orientação mais introvertida; prefere ambientes calmos e poucos interlocutores, gasta menos energia na interação social e tende a ouvir mais do que a tomar a palavra. Não indica falta de competência social, mas menor procura de estimulação social.",
+  },
+  A: {
+    Elevado:
+      "Pessoa empática e cooperativa; sintoniza com os sentimentos alheios, valoriza a harmonia e tende a confiar e a agir de forma solidária.",
+    Médio:
+      "Coopera mas mantém a defesa dos próprios interesses; empática de forma seletiva.",
+    Baixo:
+      "Orientação mais cética ou competitiva; centra-se mais nos próprios objetivos, é mais crítica face aos outros e menos movida pela necessidade de agradar. Pode traduzir-se em maior frontalidade e independência de juízo.",
+  },
+  C: {
+    Elevado:
+      "Pessoa organizada e fiável; planeia, cumpre prazos, mantém ordem, conclui o que inicia e atende ao detalhe.",
+    Médio:
+      "Organização situacional; estruturada nas tarefas que prioriza, mais flexível nas restantes.",
+    Baixo:
+      "Estilo mais espontâneo e flexível; menos apego a rotinas e planeamento, maior tendência para adiar ou desarrumar, mas também maior adaptabilidade a imprevistos. Em contexto escolar ou profissional, sinaliza necessidade de apoio à estruturação do trabalho.",
+  },
+  N: {
+    Elevado:
+      "Maior reatividade emocional; oscilações de humor mais frequentes, tendência a preocupar-se e a sentir-se em baixo, sensibilidade ao stress.",
+    Médio:
+      "Reatividade emocional moderada; gere a maioria das situações, perturba-se perante pressão significativa.",
+    Baixo:
+      "Elevada estabilidade emocional; mantém-se calmo e descontraído, recupera depressa de contrariedades, humor estável.",
+  },
+  I: {
+    Elevado:
+      "Pessoa imaginativa e curiosa; gosta de ideias abstratas, explora o novo e aprecia a criatividade e a reflexão.",
+    Médio:
+      "Combina interesse por novidade com preferência pelo concreto e familiar.",
+    Baixo:
+      "Orientação mais prática e concreta; prefere o conhecido e o aplicável, com menos atração por abstração ou experimentação. Não indica menor capacidade, mas menor preferência por conteúdos abstratos.",
+  },
+};
 
 interface OccDetail {
   prof: string;
@@ -229,8 +282,8 @@ export default function Resultados() {
   const [orientadorText, setOrientadorText] = useState<string>("");
   const [loadingOrientador, setLoadingOrientador] = useState(false);
   const [errorOrientador, setErrorOrientador] = useState<string | null>(null);
+  const [sintesePersonalidade, setSintesePersonalidade] = useState<string>("");
   const areaNameMapRef = useRef<Record<string, string>>({});
-  const [areaDetails, setAreaDetails] = useState<Record<string, AreaDetail>>({});
   const [recalculating, setRecalculating] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
@@ -244,6 +297,9 @@ export default function Resultados() {
     if (!result) return;
     // A recomendação (IA) é parte do relatório completo: não corre no sintético.
     if (result.nivel === "sintetico") return;
+    if (result.sintese_personalidade) {
+      setSintesePersonalidade(result.sintese_personalidade);
+    }
     if (result.orientador_text) {
       setOrientadorText(result.orientador_text);
       return;
@@ -263,6 +319,9 @@ export default function Resultados() {
           );
         } else {
           setOrientadorText(data.text);
+          if (data.sintese_personalidade) {
+            setSintesePersonalidade(data.sintese_personalidade);
+          }
         }
       } catch (err) {
         console.error("Erro inesperado ao gerar orientador_text:", err);
@@ -499,38 +558,8 @@ export default function Resultados() {
         }
       }
 
-      // Derive top 3 area cods from cnaef_n1_scores, filtered by valid areaNameMap entries
-      const derivedTop3Cods = Object.entries(data.cnaef_n1_scores ?? {})
-        .filter(([cod]) => !!areaNameMap[cod])
-        .sort((a, b) => Number(b[1]) - Number(a[1]))
-        .slice(0, 3)
-        .map(([cod]) => cod);
-
-      if (derivedTop3Cods.length > 0) {
-        const detailResults = await Promise.all(
-          derivedTop3Cods.map((cod) =>
-            supabase.rpc("get_area_details", {
-              area_cod: Number(cod),
-              esco_list: top50Escos,
-            })
-          )
-        );
-
-        const details: Record<string, AreaDetail> = {};
-        derivedTop3Cods.forEach((cod, i) => {
-          const { data: rpcData, error: rpcError } = detailResults[i];
-          if (rpcError) {
-            console.error(`Erro ao buscar detalhes da área ${cod}:`, rpcError);
-            details[cod] = { professions: [], trainings: [] };
-          } else {
-            details[cod] = {
-              professions: rpcData?.professions ?? [],
-              trainings: rpcData?.trainings ?? [],
-            };
-          }
-        });
-        setAreaDetails(details);
-      }
+      // (removido) A RPC get_area_details não existe e o seu resultado nunca era
+      // usado no ecrã — os detalhes por área vêm de cch_detailed. Chamada eliminada.
     } catch (err) {
       console.error("Erro inesperado ao carregar resultados:", err);
       setError("Não foi possível carregar os teus resultados. Tenta recarregar a página. Se persistir, contacta o suporte.");
@@ -633,6 +662,81 @@ export default function Resultados() {
   // ─── RESULTADO SINTÉTICO (grátis) ────────────────────────────────────────
   // Só pontuações por dimensão. Sem profissões, cursos, disciplinas ou texto.
   // Não gravável. Mostra a antevisão e o botão para desbloquear o completo.
+  const secaoPersonalidade = (completo: boolean) => {
+    const ps = result.personality_scores;
+    if (!ps || Object.keys(ps).length === 0) return null;
+    const ordenado = FATOR_ORDEM
+      .filter((f) => ps[f])
+      .map((f) => ({ f, ...ps[f] }))
+      .sort((a, b) => b.media - a.media);
+    if (ordenado.length === 0) return null;
+    const forte = ordenado[0];
+
+    if (!completo) {
+      return (
+        <section className="bg-[#1E293B] border border-[#334155] rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-semibold text-white mb-3">A tua personalidade</h2>
+          <p className="text-sm text-[#94A3B8] mb-4">
+            A tua dimensão mais forte é{" "}
+            <span className="text-[#F1F5F9] font-medium">{FATOR_NOMES[forte.f]}</span> (
+            {forte.banda.toLowerCase()}). A leitura dos cinco traços e a síntese personalizada abrem no
+            relatório completo.
+          </p>
+          <div className="mb-1 flex justify-between text-sm">
+            <span className="text-[#F1F5F9]">{FATOR_NOMES[forte.f]}</span>
+            <span className="text-[#94A3B8]">{forte.banda}</span>
+          </div>
+          <div className="w-full h-2 bg-[#334155] rounded-full overflow-hidden">
+            <div className="h-full bg-[#2BA88C]" style={{ width: `${forte.pct}%` }} />
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="bg-[#1E293B] rounded-xl overflow-hidden mt-6">
+        <div className="h-1.5 bg-[#2BA88C]" />
+        <div className="p-8">
+          <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">A tua personalidade</h2>
+          <p className="text-base text-[#94A3B8] mb-6">
+            Leitura de autoconhecimento (Big Five). Não substitui uma avaliação com baremos validados, e
+            nenhum polo é "bom" ou "mau".
+          </p>
+
+          {ordenado.map((d) => (
+            <div key={d.f} className="mb-5">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-[#F1F5F9] font-medium">{FATOR_NOMES[d.f]}</span>
+                <span className="text-[#94A3B8]">
+                  {d.media.toFixed(2)} · {d.banda}
+                </span>
+              </div>
+              <div className="w-full h-2 bg-[#334155] rounded-full overflow-hidden mb-2">
+                <div className="h-full bg-[#2BA88C]" style={{ width: `${d.pct}%` }} />
+              </div>
+              <p className="text-sm text-[#94A3B8] leading-relaxed">
+                {PERS_DESCRICOES[d.f]?.[d.banda]}
+                {d.f === "N" &&
+                  " (Neste traço, um valor alto significa menos estabilidade emocional.)"}
+              </p>
+            </div>
+          ))}
+
+          {sintesePersonalidade && (
+            <div className="mt-8 border-t border-[#334155] pt-6 max-w-4xl">
+              <h3 className="text-lg font-semibold text-[#F1F5F9] mb-3">Síntese</h3>
+              {sintesePersonalidade.split("\n\n").map((para, i) => (
+                <p key={i} className="text-base text-[#F1F5F9] leading-relaxed mb-4">
+                  {para}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
+
   if (result.nivel === "sintetico") {
     const riasecRows = Object.entries(result.riasec_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
     const intelRows = Object.entries(result.intel_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
@@ -689,6 +793,8 @@ export default function Resultados() {
               <Barra key={cod} label={INTEL_NAMES[cod] ?? cod} value={Number(val)} />
             ))}
           </section>
+
+          {secaoPersonalidade(false)}
 
           {/* Antevisão + desbloqueio */}
           <section className="bg-[#1E293B] border border-[#2BA88C] rounded-lg p-6">
@@ -2002,6 +2108,8 @@ export default function Resultados() {
             )}
           </div>
         </section>
+
+        {secaoPersonalidade(true)}
       </main>
     </div>
   );
