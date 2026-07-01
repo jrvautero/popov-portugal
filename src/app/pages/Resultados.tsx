@@ -761,8 +761,8 @@ export default function Resultados() {
           <div className="h-full px-6 flex items-center justify-between">
             <div className="text-2xl font-bold text-white">POPOV</div>
             <div className="flex items-center gap-4">
-              <span className="text-[#94A3B8] text-sm">
-                {saldoCreditos ?? 0} {saldoCreditos === 1 ? "crédito" : "créditos"}
+              <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
+                Créditos disponíveis: {saldoCreditos ?? 0}
               </span>
               <button
                 onClick={() => navigate("/app")}
@@ -894,37 +894,46 @@ export default function Resultados() {
         <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
           <div className="h-full px-6 flex items-center justify-between">
             <div className="text-2xl font-bold text-white">POPOV</div>
-            <div className="flex items-center gap-4">
-              <span className="text-[#94A3B8] text-sm">
-                {saldoCreditos ?? 0} {saldoCreditos === 1 ? "crédito" : "créditos"}
-              </span>
-              <button
-                onClick={() => navigate("/app")}
-                className="text-white text-sm hover:underline"
-              >
-                Os meus testes
-              </button>
-              <span className="text-[#94A3B8] text-sm">
-                {profile?.full_name || "Estudante"}
-              </span>
-              <a href="/app/perfil" className="text-white text-sm hover:underline">
-                O meu perfil
-              </a>
-              <button
-                onClick={handleRecalculate}
-                disabled={recalculating}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
-                title="Recalcular resultados com os dados mais recentes"
-              >
-                <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
-                {recalculating ? "A recalcular..." : "Recalcular"}
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
-              >
-                Sair
-              </button>
+            <div className="flex items-center gap-5">
+              {/* Identidade */}
+              <div className="flex items-center gap-3">
+                <span className="text-white text-sm font-medium">{profile?.full_name || "Estudante"}</span>
+                <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
+                  Créditos disponíveis: {saldoCreditos ?? 0}
+                </span>
+              </div>
+              <span className="w-px h-5 bg-[#334155]" />
+              {/* Navegação */}
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => navigate("/app")}
+                  className="text-[#94A3B8] text-sm hover:text-white transition-colors"
+                >
+                  Os meus testes
+                </button>
+                <a href="/app/perfil" className="text-[#94A3B8] text-sm hover:text-white transition-colors">
+                  O meu perfil
+                </a>
+              </div>
+              <span className="w-px h-5 bg-[#334155]" />
+              {/* Ações */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleRecalculate}
+                  disabled={recalculating}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
+                  title="Recalcular resultados com os dados mais recentes"
+                >
+                  <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
+                  {recalculating ? "A recalcular..." : "Recalcular"}
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
+                >
+                  Sair
+                </button>
+              </div>
             </div>
           </div>
         </header>
@@ -1336,39 +1345,48 @@ export default function Resultados() {
       <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
         <div className="h-full px-6 flex items-center justify-between">
           <div className="text-2xl font-bold text-white">POPOV</div>
-          <div className="flex items-center gap-4">
-            <span className="text-[#94A3B8] text-sm">
-              {saldoCreditos ?? 0} {saldoCreditos === 1 ? "crédito" : "créditos"}
-            </span>
-            <button
-              onClick={() => navigate("/app")}
-              className="text-white text-sm hover:underline"
-            >
-              Os meus testes
-            </button>
-            <span className="text-[#94A3B8] text-sm">
-              {profile?.full_name || "Estudante"}
-            </span>
-            <a href="/app/perfil" className="text-white text-sm hover:underline">
-              O meu perfil
-            </a>
-            {result && (
+          <div className="flex items-center gap-5">
+            {/* Identidade */}
+            <div className="flex items-center gap-3">
+              <span className="text-white text-sm font-medium">{profile?.full_name || "Estudante"}</span>
+              <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
+                Créditos disponíveis: {saldoCreditos ?? 0}
+              </span>
+            </div>
+            <span className="w-px h-5 bg-[#334155]" />
+            {/* Navegação */}
+            <div className="flex items-center gap-4">
               <button
-                onClick={handleRecalculate}
-                disabled={recalculating}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
-                title="Recalcular resultados com os dados mais recentes"
+                onClick={() => navigate("/app")}
+                className="text-[#94A3B8] text-sm hover:text-white transition-colors"
               >
-                <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
-                {recalculating ? "A recalcular..." : "Recalcular"}
+                Os meus testes
               </button>
-            )}
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
-            >
-              Sair
-            </button>
+              <a href="/app/perfil" className="text-[#94A3B8] text-sm hover:text-white transition-colors">
+                O meu perfil
+              </a>
+            </div>
+            <span className="w-px h-5 bg-[#334155]" />
+            {/* Ações */}
+            <div className="flex items-center gap-3">
+              {result && (
+                <button
+                  onClick={handleRecalculate}
+                  disabled={recalculating}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
+                  title="Recalcular resultados com os dados mais recentes"
+                >
+                  <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
+                  {recalculating ? "A recalcular..." : "Recalcular"}
+                </button>
+              )}
+              <button
+                onClick={handleSignOut}
+                className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
+              >
+                Sair
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -1941,18 +1959,18 @@ export default function Resultados() {
           return (
             <section className="bg-[#1E293B] rounded-xl overflow-hidden">
               <div className="h-1.5 bg-[#2BA88C]" />
-              <div className="p-8">
+              <div className="p-6">
                 {/* Cabeçalho */}
                 <div className="flex items-center gap-3 mb-3">
                   <BookOpenCheck style={{ width: 32, height: 32, color: "#2BA88C", flexShrink: 0 }} />
                   <h2 className="text-2xl font-bold text-[#F1F5F9]">Escolhe o teu caminho</h2>
                 </div>
-                <p className="text-base text-[#94A3B8] leading-relaxed mb-8">
+                <p className="text-base text-[#94A3B8] leading-relaxed mb-5">
                   Agora que sabes quais são os teus itinerários recomendados, podes escolher o teu caminho. Aqui tens as profissões mais compatíveis em cada área e como podes aceder a elas.
                 </p>
 
                 {/* 3 cards em coluna */}
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {derivedTop3.map(([cod, areaScore], cardIdx) => {
                     const Icon = CNAEF_ICONS[cod] ?? BookOpen;
                     const areaName = areaNameMapRef.current[cod];
@@ -1974,11 +1992,11 @@ export default function Resultados() {
                     return (
                       <div
                         key={cod}
-                        className="rounded-xl p-6"
+                        className="rounded-xl p-4"
                         style={{ backgroundColor: cardIdx === 0 ? "rgba(43,168,140,0.08)" : "#0F172A", border: cardIdx === 0 ? "1px solid #2BA88C" : "1px solid #334155" }}
                       >
                         {/* Cabeçalho do card */}
-                        <div className="flex items-center gap-3 mb-5">
+                        <div className="flex items-center gap-3 mb-3">
                           <Icon style={{ width: 24, height: 24, color: "#2BA88C", flexShrink: 0 }} />
                           <span className="text-lg font-bold text-[#F1F5F9]">{areaName}</span>
                           <span className="ml-auto text-base font-bold tabular-nums" style={{ color: "#2BA88C" }}>{areaPct}%</span>
@@ -1988,7 +2006,7 @@ export default function Resultados() {
                         {profs.length === 0 ? (
                           <p className="text-sm text-[#94A3B8]">Sem profissões disponíveis para esta área.</p>
                         ) : (
-                          <div className="space-y-5">
+                          <div className="space-y-3">
                             {profs.map(([esco, occ], pi) => {
                               const profPct = profMaxScore > 0 ? Math.round((occ.score / profMaxScore) * 100) : 0;
                               const isco = occ.isco_4dig;
@@ -1998,7 +2016,7 @@ export default function Resultados() {
                               const hasMore = formacoes.length > 3;
 
                               return (
-                                <div key={esco} className="grid grid-cols-1 lg:grid-cols-2 gap-3 pb-4" style={{ borderBottom: pi < profs.length - 1 ? "1px solid #1E293B" : "none" }}>
+                                <div key={esco} className="grid grid-cols-1 lg:grid-cols-2 gap-2 pb-2" style={{ borderBottom: pi < profs.length - 1 ? "1px solid #1E293B" : "none" }}>
                                   {/* Esquerda — profissão */}
                                   <div className="flex items-start gap-2">
                                     <span className="text-xs text-[#94A3B8] tabular-nums mt-0.5 w-4 shrink-0">{pi + 1}.</span>
