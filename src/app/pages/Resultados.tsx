@@ -688,25 +688,43 @@ export default function Resultados() {
   const renderIndice = () => {
     if (indice.length === 0) return null;
     return (
-      <aside className="hidden lg:block w-56 shrink-0">
-        <div className="sticky top-20 p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8] mb-3">Secções</h3>
-          <nav className="space-y-1">
-            {indice.map((it) => (
-              <button
-                key={it.id}
-                onClick={() =>
-                  document.getElementById(it.id)?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
-                className={`block w-full text-left text-sm rounded-md px-3 py-1.5 transition-colors ${
-                  activeSection === it.id
-                    ? "text-[#2BA88C] bg-[rgba(43,168,140,0.08)] font-medium"
-                    : "text-[#94A3B8] hover:text-white"
-                }`}
-              >
-                {it.label}
-              </button>
-            ))}
+      <aside className="hidden lg:block w-60 shrink-0 border-r border-[#334155]">
+        <div className="sticky top-20 px-5 py-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8] pb-2 mb-3 border-b border-[#334155]">
+            Secções
+          </h3>
+          <nav className="relative">
+            {/* linha vertical contínua atrás dos pontos */}
+            <span className="absolute left-[5px] top-2 bottom-2 w-px bg-[#334155]" aria-hidden="true" />
+            {indice.map((it) => {
+              const ativo = activeSection === it.id;
+              return (
+                <button
+                  key={it.id}
+                  onClick={() =>
+                    document.getElementById(it.id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }
+                  className="group relative flex items-center gap-3 w-full text-left py-1.5 pl-0"
+                >
+                  <span
+                    className={`relative z-10 w-[11px] h-[11px] rounded-full border-2 shrink-0 transition-colors ${
+                      ativo
+                        ? "bg-[#2BA88C] border-[#2BA88C]"
+                        : "bg-[#0F172A] border-[#334155] group-hover:border-[#2BA88C]"
+                    }`}
+                  />
+                  <span
+                    className={`text-sm transition-colors ${
+                      ativo
+                        ? "text-[#2BA88C] font-medium"
+                        : "text-[#94A3B8] group-hover:text-white"
+                    }`}
+                  >
+                    {it.label}
+                  </span>
+                </button>
+              );
+            })}
           </nav>
         </div>
       </aside>
