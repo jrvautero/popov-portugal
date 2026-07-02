@@ -22,6 +22,8 @@ import {
   BookOpenCheck,
   ChevronRight,
   Loader2,
+  Menu,
+  ChevronDown,
   Scale,
   Search,
   Sprout,
@@ -290,6 +292,8 @@ export default function Resultados() {
   const [saldoCreditos, setSaldoCreditos] = useState<number | null>(null);
   const [indice, setIndice] = useState<{ id: string; label: string }[]>([]);
   const [activeSection, setActiveSection] = useState<string>("");
+  const [menuHeaderAberto, setMenuHeaderAberto] = useState(false);
+  const [seccoesAberto, setSeccoesAberto] = useState(false);
 
   useEffect(() => {
     loadResults();
@@ -685,30 +689,120 @@ export default function Resultados() {
   // ─── RESULTADO SINTÉTICO (grátis) ────────────────────────────────────────
   // Só pontuações por dimensão. Sem profissões, cursos, disciplinas ou texto.
   // Não gravável. Mostra a antevisão e o botão para desbloquear o completo.
+  const renderHeaderCompleto = () => (
+    <header className="bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
+      <div className="h-16 px-4 sm:px-6 flex items-center justify-between">
+        <div className="text-2xl font-bold text-white">POPOV</div>
+
+        {/* Desktop */}
+        <div className="hidden lg:flex items-center gap-5">
+          <div className="flex items-center gap-3">
+            <span className="text-white text-sm font-medium">{profile?.full_name || "Estudante"}</span>
+            <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
+              Créditos disponíveis: {saldoCreditos ?? 0}
+            </span>
+          </div>
+          <span className="w-px h-5 bg-[#334155]" />
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate("/app")} className="text-[#94A3B8] text-sm hover:text-white transition-colors">
+              Os meus testes
+            </button>
+            <a href="/app/perfil" className="text-[#94A3B8] text-sm hover:text-white transition-colors">
+              O meu perfil
+            </a>
+          </div>
+          <span className="w-px h-5 bg-[#334155]" />
+          <div className="flex items-center gap-3">
+            {result && (
+              <button
+                onClick={handleRecalculate}
+                disabled={recalculating}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
+                title="Recalcular resultados com os dados mais recentes"
+              >
+                <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
+                {recalculating ? "A recalcular..." : "Recalcular"}
+              </button>
+            )}
+            <button onClick={handleSignOut} className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors">
+              Sair
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile */}
+        <div className="flex lg:hidden items-center gap-2">
+          <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
+            Créditos: {saldoCreditos ?? 0}
+          </span>
+          <button onClick={() => setMenuHeaderAberto((v) => !v)} aria-label="Menu" className="text-[#94A3B8] p-1">
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
+
+      {/* Painel mobile do header */}
+      {menuHeaderAberto && (
+        <div className="lg:hidden border-t border-[#334155] px-4 py-3">
+          <p className="text-white text-sm font-medium pb-2 border-b border-[#334155] mb-2">
+            {profile?.full_name || "Estudante"}
+          </p>
+          <button onClick={() => navigate("/app")} className="block w-full text-left text-[#94A3B8] text-sm py-2">
+            Os meus testes
+          </button>
+          <a href="/app/perfil" className="block w-full text-left text-[#94A3B8] text-sm py-2">
+            O meu perfil
+          </a>
+          {result && (
+            <button
+              onClick={handleRecalculate}
+              disabled={recalculating}
+              className="block w-full text-left text-[#94A3B8] text-sm py-2 disabled:opacity-50"
+            >
+              {recalculating ? "A recalcular..." : "Recalcular"}
+            </button>
+          )}
+          <button onClick={handleSignOut} className="block w-full text-left text-[#94A3B8] text-sm py-2">
+            Sair
+          </button>
+        </div>
+      )}
+    </header>
+  );
+
   const renderIndiceMobile = () => {
     if (indice.length === 0) return null;
+    const atual = indice.find((it) => it.id === activeSection) ?? indice[0];
     return (
-      <div className="lg:hidden sticky top-16 z-40 bg-[#0F172A] border-b border-[#334155] overflow-x-auto">
-        <div className="flex gap-2 px-4 py-2 w-max">
-          {indice.map((it) => {
-            const ativo = activeSection === it.id;
-            return (
-              <button
-                key={it.id}
-                onClick={() =>
-                  document.getElementById(it.id)?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
-                className={`whitespace-nowrap text-sm rounded-full px-3 py-1 border transition-colors ${
-                  ativo
-                    ? "border-[#2BA88C] text-[#2BA88C] bg-[rgba(43,168,140,0.1)] font-medium"
-                    : "border-[#334155] text-[#94A3B8]"
-                }`}
-              >
-                {it.label}
-              </button>
-            );
-          })}
-        </div>
+      <div className="lg:hidden sticky top-16 z-40 bg-[#0F172A] border-b border-[#334155] px-4 py-2">
+        <button
+          onClick={() => setSeccoesAberto((v) => !v)}
+          className="w-full flex items-center justify-between border border-[#334155] rounded-lg px-3 py-2 bg-[#1E293B]"
+        >
+          <span className="text-sm text-[#F1F5F9]">Secção: {atual?.label}</span>
+          <ChevronDown className={`w-4 h-4 text-[#2BA88C] transition-transform ${seccoesAberto ? "rotate-180" : ""}`} />
+        </button>
+        {seccoesAberto && (
+          <div className="mt-2 border border-[#334155] rounded-lg overflow-hidden">
+            {indice.map((it) => {
+              const ativo = it.id === activeSection;
+              return (
+                <button
+                  key={it.id}
+                  onClick={() => {
+                    document.getElementById(it.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    setSeccoesAberto(false);
+                  }}
+                  className={`block w-full text-left text-sm px-3 py-2 border-t border-[#1E293B] first:border-t-0 ${
+                    ativo ? "text-[#2BA88C] bg-[rgba(43,168,140,0.10)]" : "text-[#94A3B8]"
+                  }`}
+                >
+                  {it.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
@@ -988,52 +1082,7 @@ export default function Resultados() {
     return (
       <div className="min-h-screen bg-[#0F172A]">
         {/* Header */}
-        <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
-          <div className="h-full px-6 flex items-center justify-between">
-            <div className="text-2xl font-bold text-white">POPOV</div>
-            <div className="flex items-center gap-5">
-              {/* Identidade */}
-              <div className="flex items-center gap-3">
-                <span className="text-white text-sm font-medium">{profile?.full_name || "Estudante"}</span>
-                <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
-                  Créditos disponíveis: {saldoCreditos ?? 0}
-                </span>
-              </div>
-              <span className="w-px h-5 bg-[#334155]" />
-              {/* Navegação */}
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => navigate("/app")}
-                  className="text-[#94A3B8] text-sm hover:text-white transition-colors"
-                >
-                  Os meus testes
-                </button>
-                <a href="/app/perfil" className="text-[#94A3B8] text-sm hover:text-white transition-colors">
-                  O meu perfil
-                </a>
-              </div>
-              <span className="w-px h-5 bg-[#334155]" />
-              {/* Ações */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleRecalculate}
-                  disabled={recalculating}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
-                  title="Recalcular resultados com os dados mais recentes"
-                >
-                  <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
-                  {recalculating ? "A recalcular..." : "Recalcular"}
-                </button>
-                <button
-                  onClick={handleSignOut}
-                  className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
-                >
-                  Sair
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
+        {renderHeaderCompleto()}
 
         <div className="flex">
           {renderIndice()}
@@ -1093,7 +1142,7 @@ export default function Resultados() {
                 </div>
               </div>
 
-              <div className="lg:col-span-2">
+              <div className="hidden lg:block lg:col-span-2">
                 <ResponsiveContainer width="100%" height={460}>
                   <RadarChart data={radarData} outerRadius="70%" margin={{ top: 60, right: 100, bottom: 60, left: 100 }}>
                     <PolarGrid stroke="#334155" />
@@ -1445,54 +1494,7 @@ export default function Resultados() {
   return (
     <div className="min-h-screen bg-[#0F172A]">
       {/* Header */}
-      <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
-        <div className="h-full px-6 flex items-center justify-between">
-          <div className="text-2xl font-bold text-white">POPOV</div>
-          <div className="flex items-center gap-5">
-            {/* Identidade */}
-            <div className="flex items-center gap-3">
-              <span className="text-white text-sm font-medium">{profile?.full_name || "Estudante"}</span>
-              <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
-                Créditos disponíveis: {saldoCreditos ?? 0}
-              </span>
-            </div>
-            <span className="w-px h-5 bg-[#334155]" />
-            {/* Navegação */}
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate("/app")}
-                className="text-[#94A3B8] text-sm hover:text-white transition-colors"
-              >
-                Os meus testes
-              </button>
-              <a href="/app/perfil" className="text-[#94A3B8] text-sm hover:text-white transition-colors">
-                O meu perfil
-              </a>
-            </div>
-            <span className="w-px h-5 bg-[#334155]" />
-            {/* Ações */}
-            <div className="flex items-center gap-3">
-              {result && (
-                <button
-                  onClick={handleRecalculate}
-                  disabled={recalculating}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
-                  title="Recalcular resultados com os dados mais recentes"
-                >
-                  <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
-                  {recalculating ? "A recalcular..." : "Recalcular"}
-                </button>
-              )}
-              <button
-                onClick={handleSignOut}
-                className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
-              >
-                Sair
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+        {renderHeaderCompleto()}
 
       <div className="flex">
         {renderIndice()}
@@ -1790,7 +1792,7 @@ export default function Resultados() {
                 </div>
 
                 {/* Coluna direita — Radar */}
-                <div className="lg:col-span-2">
+                <div className="hidden lg:block lg:col-span-2">
                   <ResponsiveContainer width="100%" height={600}>
                     <RadarChart
                       data={radarData}
