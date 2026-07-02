@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { Info, ClipboardList, BarChart3, Lock, Check, Clock, Circle } from 'lucide-react';
+import { Info, ClipboardList, BarChart3, Lock, Check, Clock, Circle, Menu } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 
@@ -139,7 +139,7 @@ export default function StudentDashboard() {
   };
 
   const cards: CardConfig[] = [
-    { id: 'intro', title: 'Sobre ti', icon: Info, locked: false },
+    { id: 'intro', title: 'Sobre o POPOV', icon: Info, locked: false },
     { id: 'assessment', title: 'Os teus testes', icon: ClipboardList, locked: !introVisited },
     { id: 'results', title: 'Os teus resultados', icon: BarChart3, locked: !todosConcluidos || !hasResults },
   ];
@@ -164,6 +164,7 @@ export default function StudentDashboard() {
   // Ao clicar num teste: se está concluído, é um REFAZER -> pede confirmação
   // (avisa que apaga o resultado anterior e cobra 1 crédito). Senão, abre direto.
   const [refazerCode, setRefazerCode] = useState<string | null>(null);
+  const [menuAberto, setMenuAberto] = useState(false);
   const temCompleto = nivelResultado === 'completo';
 
   const clicarTeste = (code: string, estado: Estado) => {
@@ -270,10 +271,12 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-[#0F172A]">
       {/* HEADER */}
-      <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
-        <div className="h-full px-6 flex items-center justify-between">
-          <div className="text-2xl font-bold text-white">POPOV</div>
-          <div className="flex items-center gap-4">
+      <header className="bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
+        <div className="h-16 px-4 sm:px-6 flex items-center justify-between">
+          <button onClick={() => navigate('/app')} className="text-2xl font-bold text-white">POPOV</button>
+
+          {/* Desktop */}
+          <div className="hidden lg:flex items-center gap-4">
             <span className="text-[#94A3B8] text-sm">
               {saldo} {saldo === 1 ? 'crédito' : 'créditos'}
             </span>
@@ -288,14 +291,39 @@ export default function StudentDashboard() {
               Sair
             </button>
           </div>
+
+          {/* Mobile */}
+          <div className="flex lg:hidden items-center gap-2">
+            <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
+              {saldo} {saldo === 1 ? 'crédito' : 'créditos'}
+            </span>
+            <button onClick={() => setMenuAberto((v) => !v)} aria-label="Menu" className="text-[#94A3B8] p-1">
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
         </div>
+
+        {/* Painel mobile */}
+        {menuAberto && (
+          <div className="lg:hidden border-t border-[#334155] px-4 py-3">
+            <p className="text-white text-sm font-medium pb-2 border-b border-[#334155] mb-2">
+              {profile?.full_name || 'Estudante'}
+            </p>
+            <a href="/app/perfil" className="block w-full text-left text-[#94A3B8] text-sm py-2">
+              O meu perfil
+            </a>
+            <button onClick={handleSignOut} className="block w-full text-left text-[#94A3B8] text-sm py-2">
+              Sair
+            </button>
+          </div>
+        )}
       </header>
 
       {/* LAYOUT PRINCIPAL */}
       <div className="flex flex-col md:flex-row">
         {/* COLUNA LATERAL - Cards */}
         <aside className="w-full md:w-[280px] p-4">
-          <div className="flex md:flex-col gap-3 overflow-x-auto md:overflow-visible">
+          <div className="flex flex-col gap-3">
             {cards.map((card) => {
               const Icon = card.icon;
               const isActive = selectedCard === card.id;
@@ -305,7 +333,7 @@ export default function StudentDashboard() {
                   key={card.id}
                   onClick={() => handleCardClick(card.id)}
                   className={`
-                    min-w-[200px] md:min-w-0 h-[110px] rounded-lg p-4
+                    w-full h-[110px] rounded-lg p-4
                     ${isLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                     ${isActive && !isLocked ? 'bg-[#334155] border-2 border-[#2BA88C]' : 'bg-[#1E293B]'}
                     transition-all relative
@@ -327,22 +355,13 @@ export default function StudentDashboard() {
 
         {/* COLUNA PRINCIPAL */}
         <main className="flex-1 p-8 max-w-4xl">
-          {/* SOBRE TI — aviso das regras da bateria */}
+          {/* SOBRE O POPOV — introdução curta */}
           {selectedCard === 'intro' && (
             <div>
-              <h2 className="text-2xl font-bold text-white mb-6">Sobre ti</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Sobre o POPOV</h2>
               <div className="space-y-4 text-base text-[#F1F5F9] leading-relaxed">
                 <p>
-                  O POPOV é um programa de orientação que te ajuda a conhecer melhor os teus interesses, as tuas competências e possíveis percursos.
-                </p>
-                <p>
-                  A tua avaliação é feita por testes, que podes fazer um de cada vez. Cada teste fica guardado: começas, paras quando quiseres e retomas mais tarde de onde ficaste. Não há respostas certas ou erradas.
-                </p>
-                <p>
-                  Quando tiveres os testes concluídos, vês um resultado resumido, gratuito, com a tua pontuação em cada dimensão. O relatório completo, com áreas, disciplinas, profissões, cursos e orientação, precisa de um crédito.
-                </p>
-                <p>
-                  Se mais tarde refizeres um teste, o relatório completo anterior deixa de estar disponível e gerar um novo relatório completo gasta outro crédito.
+                  O POPOV ajuda-te a descobrir as áreas, profissões e cursos que mais combinam contigo. Fazes os testes ao teu ritmo e recebes um resultado personalizado.
                 </p>
               </div>
               <button
