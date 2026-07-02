@@ -692,7 +692,7 @@ export default function Resultados() {
   const renderHeaderCompleto = () => (
     <header className="bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
       <div className="h-16 px-4 sm:px-6 flex items-center justify-between">
-        <div className="text-2xl font-bold text-white">POPOV</div>
+        <button onClick={() => navigate("/app")} className="text-2xl font-bold text-white">POPOV</button>
 
         {/* Desktop */}
         <div className="hidden lg:flex items-center gap-5">
@@ -949,17 +949,20 @@ export default function Resultados() {
     return (
       <div className="min-h-screen bg-[#0F172A]">
         <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
-          <div className="h-full px-6 flex items-center justify-between">
-            <div className="text-2xl font-bold text-white">POPOV</div>
-            <div className="flex items-center gap-4">
+          <div className="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
+            <button onClick={() => navigate("/app")} className="text-2xl font-bold text-white shrink-0">POPOV</button>
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
-                Créditos disponíveis: {saldoCreditos ?? 0}
+                <span className="hidden sm:inline">Créditos disponíveis: </span>
+                <span className="sm:hidden">Créditos: </span>
+                {saldoCreditos ?? 0}
               </span>
               <button
                 onClick={() => navigate("/app")}
-                className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
+                className="shrink-0 px-3 sm:px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
               >
-                Voltar ao painel
+                <span className="hidden sm:inline">Voltar ao painel</span>
+                <span className="sm:hidden">Voltar</span>
               </button>
             </div>
           </div>
