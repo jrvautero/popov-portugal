@@ -196,10 +196,8 @@ export default function QuestionarioPersonalidade() {
     const novo = { ...answers, [itemId]: value };
     setAnswers(novo);
 
-    await supabase
-      .from('personality_responses')
-      .upsert({ session_id: sessionId, item_id: itemId, resposta: value });
-
+    // Avançar/rolar imediatamente, sem esperar pela gravação
+    // (no mobile a rede atrasa o await e o scroll ficava preso atrás dele).
     if (Object.keys(novo).length >= TOTAL_QUESTIONS) {
       setStage('conclusion');
     } else {
@@ -210,6 +208,11 @@ export default function QuestionarioPersonalidade() {
         }, 150);
       }
     }
+
+    // Salvar no banco (em paralelo, não bloqueia o scroll acima)
+    await supabase
+      .from('personality_responses')
+      .upsert({ session_id: sessionId, item_id: itemId, resposta: value });
   };
 
   const completedRef = useRef(false);

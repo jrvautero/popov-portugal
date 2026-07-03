@@ -396,12 +396,8 @@ export default function Questionario() {
     const answeredCount = Object.keys(updatedAnswers).length;
     showEncouragementIfMilestone(answeredCount, true);
 
-    // Salvar no banco
-    await supabase
-      .from('interest_answers')
-      .upsert({ session_id: sessionId, item_cod: itemCod, answer });
-
-    // Aguardar 100ms e rolar para próxima pergunta não respondida
+    // Rolar para a próxima pergunta imediatamente, sem esperar pela gravação
+    // (no mobile a rede atrasa o await e o scroll ficava preso atrás dele).
     setTimeout(() => {
       const nextUnanswered = interestItems.find(item => !updatedAnswers[item.cod]);
 
@@ -412,6 +408,11 @@ export default function Questionario() {
         setStage('conclusion');
       }
     }, 100);
+
+    // Salvar no banco (em paralelo, não bloqueia o scroll acima)
+    await supabase
+      .from('interest_answers')
+      .upsert({ session_id: sessionId, item_cod: itemCod, answer });
   };
 
   const handleIntelligenceAnswer = async (itemOrdem: number, answer: number) => {
@@ -425,12 +426,8 @@ export default function Questionario() {
     const answeredCount = Object.keys(updatedAnswers).length;
     showEncouragementIfMilestone(answeredCount, false);
 
-    // Salvar no banco
-    await supabase
-      .from('intelligence_answers')
-      .upsert({ session_id: sessionId, item_ordem: itemOrdem, answer });
-
-    // Aguardar 100ms e rolar para próxima pergunta não respondida
+    // Rolar para a próxima pergunta imediatamente, sem esperar pela gravação
+    // (no mobile a rede atrasa o await e o scroll ficava preso atrás dele).
     setTimeout(() => {
       const nextUnanswered = intelligenceItems.find(item => !updatedAnswers[item.ordem_nova]);
 
@@ -441,6 +438,11 @@ export default function Questionario() {
         setStage('conclusion');
       }
     }, 100);
+
+    // Salvar no banco (em paralelo, não bloqueia o scroll acima)
+    await supabase
+      .from('intelligence_answers')
+      .upsert({ session_id: sessionId, item_ordem: itemOrdem, answer });
   };
 
   const [allTestsDone, setAllTestsDone] = useState(false);
