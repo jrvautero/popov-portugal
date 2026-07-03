@@ -22,6 +22,8 @@ import {
   BookOpenCheck,
   ChevronRight,
   Loader2,
+  Menu,
+  ChevronDown,
   Scale,
   Search,
   Sprout,
@@ -284,11 +286,14 @@ export default function Resultados() {
   const [errorOrientador, setErrorOrientador] = useState<string | null>(null);
   const [sintesePersonalidade, setSintesePersonalidade] = useState<string>("");
   const areaNameMapRef = useRef<Record<string, string>>({});
-  const [areaDetails, setAreaDetails] = useState<Record<string, AreaDetail>>({});
   const [recalculating, setRecalculating] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [saldoCreditos, setSaldoCreditos] = useState<number | null>(null);
+  const [indice, setIndice] = useState<{ id: string; label: string }[]>([]);
+  const [activeSection, setActiveSection] = useState<string>("");
+  const [menuHeaderAberto, setMenuHeaderAberto] = useState(false);
+  const [seccoesAberto, setSeccoesAberto] = useState(false);
 
   useEffect(() => {
     loadResults();
@@ -335,6 +340,27 @@ export default function Resultados() {
     }
     generateOrientador();
   }, [result]);
+
+  // Índice lateral: construído a partir das secções realmente presentes no DOM
+  // (marcadas com data-idx-label) e destaque da secção visível ao rolar.
+  useEffect(() => {
+    if (loading || !result) return;
+    const els = Array.from(document.querySelectorAll<HTMLElement>("[data-idx-label]"));
+    setIndice(els.map((el) => ({ id: el.id, label: el.dataset.idxLabel || "" })));
+    if (els.length === 0) return;
+
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visiveis = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visiveis[0]) setActiveSection((visiveis[0].target as HTMLElement).id);
+      },
+      { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
+    );
+    els.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [loading, result]);
 
   async function loadResults() {
     setLoading(true);
@@ -559,38 +585,8 @@ export default function Resultados() {
         }
       }
 
-      // Derive top 3 area cods from cnaef_n1_scores, filtered by valid areaNameMap entries
-      const derivedTop3Cods = Object.entries(data.cnaef_n1_scores ?? {})
-        .filter(([cod]) => !!areaNameMap[cod])
-        .sort((a, b) => Number(b[1]) - Number(a[1]))
-        .slice(0, 3)
-        .map(([cod]) => cod);
-
-      if (derivedTop3Cods.length > 0) {
-        const detailResults = await Promise.all(
-          derivedTop3Cods.map((cod) =>
-            supabase.rpc("get_area_details", {
-              area_cod: Number(cod),
-              esco_list: top50Escos,
-            })
-          )
-        );
-
-        const details: Record<string, AreaDetail> = {};
-        derivedTop3Cods.forEach((cod, i) => {
-          const { data: rpcData, error: rpcError } = detailResults[i];
-          if (rpcError) {
-            console.error(`Erro ao buscar detalhes da área ${cod}:`, rpcError);
-            details[cod] = { professions: [], trainings: [] };
-          } else {
-            details[cod] = {
-              professions: rpcData?.professions ?? [],
-              trainings: rpcData?.trainings ?? [],
-            };
-          }
-        });
-        setAreaDetails(details);
-      }
+      // (removido) A RPC get_area_details não existe e o seu resultado nunca era
+      // usado no ecrã — os detalhes por área vêm de cch_detailed. Chamada eliminada.
     } catch (err) {
       console.error("Erro inesperado ao carregar resultados:", err);
       setError("Não foi possível carregar os teus resultados. Tenta recarregar a página. Se persistir, contacta o suporte.");
@@ -693,6 +689,170 @@ export default function Resultados() {
   // ─── RESULTADO SINTÉTICO (grátis) ────────────────────────────────────────
   // Só pontuações por dimensão. Sem profissões, cursos, disciplinas ou texto.
   // Não gravável. Mostra a antevisão e o botão para desbloquear o completo.
+  const renderHeaderCompleto = () => (
+    <header className="bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
+      <div className="h-16 px-4 sm:px-6 flex items-center justify-between">
+        <button onClick={() => navigate("/app")} className="text-2xl font-bold text-white">POPOV</button>
+
+        {/* Desktop */}
+        <div className="hidden lg:flex items-center gap-5">
+          <div className="flex items-center gap-3">
+            <span className="text-white text-sm font-medium">{profile?.full_name || "Estudante"}</span>
+            <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
+              Créditos disponíveis: {saldoCreditos ?? 0}
+            </span>
+          </div>
+          <span className="w-px h-5 bg-[#334155]" />
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate("/app")} className="text-[#94A3B8] text-sm hover:text-white transition-colors">
+              Os meus testes
+            </button>
+            <a href="/app/perfil" className="text-[#94A3B8] text-sm hover:text-white transition-colors">
+              O meu perfil
+            </a>
+          </div>
+          <span className="w-px h-5 bg-[#334155]" />
+          <div className="flex items-center gap-3">
+            {result && (
+              <button
+                onClick={handleRecalculate}
+                disabled={recalculating}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
+                title="Recalcular resultados com os dados mais recentes"
+              >
+                <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
+                {recalculating ? "A recalcular..." : "Recalcular"}
+              </button>
+            )}
+            <button onClick={handleSignOut} className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors">
+              Sair
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile */}
+        <div className="flex lg:hidden items-center gap-2">
+          <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
+            Créditos: {saldoCreditos ?? 0}
+          </span>
+          <button onClick={() => setMenuHeaderAberto((v) => !v)} aria-label="Menu" className="text-[#94A3B8] p-1">
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
+
+      {/* Painel mobile do header */}
+      {menuHeaderAberto && (
+        <div className="lg:hidden border-t border-[#334155] px-4 py-3">
+          <p className="text-white text-sm font-medium pb-2 border-b border-[#334155] mb-2">
+            {profile?.full_name || "Estudante"}
+          </p>
+          <button onClick={() => navigate("/app")} className="block w-full text-left text-[#94A3B8] text-sm py-2">
+            Os meus testes
+          </button>
+          <a href="/app/perfil" className="block w-full text-left text-[#94A3B8] text-sm py-2">
+            O meu perfil
+          </a>
+          {result && (
+            <button
+              onClick={handleRecalculate}
+              disabled={recalculating}
+              className="block w-full text-left text-[#94A3B8] text-sm py-2 disabled:opacity-50"
+            >
+              {recalculating ? "A recalcular..." : "Recalcular"}
+            </button>
+          )}
+          <button onClick={handleSignOut} className="block w-full text-left text-[#94A3B8] text-sm py-2">
+            Sair
+          </button>
+        </div>
+      )}
+    </header>
+  );
+
+  const renderIndiceMobile = () => {
+    if (indice.length === 0) return null;
+    const atual = indice.find((it) => it.id === activeSection) ?? indice[0];
+    return (
+      <div className="lg:hidden sticky top-16 z-40 bg-[#0F172A] border-b border-[#334155] px-4 py-2">
+        <button
+          onClick={() => setSeccoesAberto((v) => !v)}
+          className="w-full flex items-center justify-between border border-[#334155] rounded-lg px-3 py-2 bg-[#1E293B]"
+        >
+          <span className="text-sm text-[#F1F5F9]">Secção: {atual?.label}</span>
+          <ChevronDown className={`w-4 h-4 text-[#2BA88C] transition-transform ${seccoesAberto ? "rotate-180" : ""}`} />
+        </button>
+        {seccoesAberto && (
+          <div className="mt-2 border border-[#334155] rounded-lg overflow-hidden">
+            {indice.map((it) => {
+              const ativo = it.id === activeSection;
+              return (
+                <button
+                  key={it.id}
+                  onClick={() => {
+                    document.getElementById(it.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    setSeccoesAberto(false);
+                  }}
+                  className={`block w-full text-left text-sm px-3 py-2 border-t border-[#1E293B] first:border-t-0 ${
+                    ativo ? "text-[#2BA88C] bg-[rgba(43,168,140,0.10)]" : "text-[#94A3B8]"
+                  }`}
+                >
+                  {it.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderIndice = () => {
+    if (indice.length === 0) return null;
+    return (
+      <aside className="hidden lg:block w-60 shrink-0 border-r border-[#334155]">
+        <div className="sticky top-20 px-5 py-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8] pb-2 mb-3 border-b border-[#334155]">
+            Secções
+          </h3>
+          <nav className="relative">
+            {/* linha vertical contínua atrás dos pontos */}
+            <span className="absolute left-[5px] top-2 bottom-2 w-px bg-[#334155]" aria-hidden="true" />
+            {indice.map((it) => {
+              const ativo = activeSection === it.id;
+              return (
+                <button
+                  key={it.id}
+                  onClick={() =>
+                    document.getElementById(it.id)?.scrollIntoView({ behavior: "smooth", block: "start" })
+                  }
+                  className="group relative flex items-center gap-3 w-full text-left py-1.5 pl-0"
+                >
+                  <span
+                    className={`relative z-10 w-[11px] h-[11px] rounded-full border-2 shrink-0 transition-colors ${
+                      ativo
+                        ? "bg-[#2BA88C] border-[#2BA88C]"
+                        : "bg-[#0F172A] border-[#334155] group-hover:border-[#2BA88C]"
+                    }`}
+                  />
+                  <span
+                    className={`text-sm transition-colors ${
+                      ativo
+                        ? "text-[#2BA88C] font-medium"
+                        : "text-[#94A3B8] group-hover:text-white"
+                    }`}
+                  >
+                    {it.label}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </aside>
+    );
+  };
+
   const secaoPersonalidade = (completo: boolean) => {
     const ps = result.personality_scores;
     if (!ps || Object.keys(ps).length === 0) return null;
@@ -725,7 +885,7 @@ export default function Resultados() {
     }
 
     return (
-      <section className="bg-[#1E293B] rounded-xl overflow-hidden mt-6">
+      <section id="sec-personalidade" data-idx-label="Personalidade" className="bg-[#1E293B] rounded-xl overflow-hidden mt-6 scroll-mt-24">
         <div className="h-1.5 bg-[#2BA88C]" />
         <div className="p-8">
           <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">A tua personalidade</h2>
@@ -789,17 +949,20 @@ export default function Resultados() {
     return (
       <div className="min-h-screen bg-[#0F172A]">
         <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
-          <div className="h-full px-6 flex items-center justify-between">
-            <div className="text-2xl font-bold text-white">POPOV</div>
-            <div className="flex items-center gap-4">
-              <span className="text-[#94A3B8] text-sm">
-                {saldoCreditos ?? 0} {saldoCreditos === 1 ? "crédito" : "créditos"}
+          <div className="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
+            <button onClick={() => navigate("/app")} className="text-2xl font-bold text-white shrink-0">POPOV</button>
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+              <span className="text-xs text-[#94A3B8] bg-[#1E293B] border border-[#334155] rounded-full px-3 py-1 whitespace-nowrap">
+                <span className="hidden sm:inline">Créditos disponíveis: </span>
+                <span className="sm:hidden">Créditos: </span>
+                {saldoCreditos ?? 0}
               </span>
               <button
                 onClick={() => navigate("/app")}
-                className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
+                className="shrink-0 px-3 sm:px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
               >
-                Voltar ao painel
+                <span className="hidden sm:inline">Voltar ao painel</span>
+                <span className="sm:hidden">Voltar</span>
               </button>
             </div>
           </div>
@@ -922,44 +1085,12 @@ export default function Resultados() {
     return (
       <div className="min-h-screen bg-[#0F172A]">
         {/* Header */}
-        <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
-          <div className="h-full px-6 flex items-center justify-between">
-            <div className="text-2xl font-bold text-white">POPOV</div>
-            <div className="flex items-center gap-4">
-              <span className="text-[#94A3B8] text-sm">
-                {saldoCreditos ?? 0} {saldoCreditos === 1 ? "crédito" : "créditos"}
-              </span>
-              <button
-                onClick={() => navigate("/app")}
-                className="text-white text-sm hover:underline"
-              >
-                Os meus testes
-              </button>
-              <span className="text-[#94A3B8] text-sm">
-                {profile?.full_name || "Estudante"}
-              </span>
-              <a href="/app/perfil" className="text-white text-sm hover:underline">
-                O meu perfil
-              </a>
-              <button
-                onClick={handleRecalculate}
-                disabled={recalculating}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
-                title="Recalcular resultados com os dados mais recentes"
-              >
-                <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
-                {recalculating ? "A recalcular..." : "Recalcular"}
-              </button>
-              <button
-                onClick={handleSignOut}
-                className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
-              >
-                Sair
-              </button>
-            </div>
-          </div>
-        </header>
+        {renderHeaderCompleto()}
 
+        <div className="flex">
+          {renderIndice()}
+          <div className="flex-1 min-w-0">
+        {renderIndiceMobile()}
         <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
           {/* Hero */}
           <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-8 space-y-2">
@@ -1014,7 +1145,7 @@ export default function Resultados() {
                 </div>
               </div>
 
-              <div className="lg:col-span-2">
+              <div className="hidden lg:block lg:col-span-2">
                 <ResponsiveContainer width="100%" height={460}>
                   <RadarChart data={radarData} outerRadius="70%" margin={{ top: 60, right: 100, bottom: 60, left: 100 }}>
                     <PolarGrid stroke="#334155" />
@@ -1046,7 +1177,7 @@ export default function Resultados() {
           </section>
 
           {/* Detalhe por área */}
-          <section className="space-y-6">
+          <section id="sec9-areas" data-idx-label="Áreas" className="space-y-6 scroll-mt-24">
             {ordered.map(([code, score], i) => {
               const meta = CCH_AREAS[code];
               const det = detailed[code];
@@ -1196,7 +1327,7 @@ export default function Resultados() {
           </section>
 
           {/* As tuas inteligências */}
-          <section className="bg-[#1E293B] rounded-xl p-8 space-y-8">
+          <section id="sec9-inteligencias" data-idx-label="Inteligências" className="bg-[#1E293B] rounded-xl p-8 space-y-8 scroll-mt-24">
             <div className="flex items-center gap-3">
               <Calculator style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
               <h2 className="text-2xl font-bold text-[#F1F5F9]">As tuas inteligências</h2>
@@ -1315,7 +1446,7 @@ export default function Resultados() {
           </section>
 
           {/* A tua recomendação */}
-          <section className="bg-[#1E293B] rounded-xl overflow-hidden">
+          <section id="sec9-recomendacao" data-idx-label="Recomendação" className="bg-[#1E293B] rounded-xl overflow-hidden scroll-mt-24">
             <div className="h-1.5 bg-[#2BA88C]" />
             <div className="p-8">
               <div className="flex items-center gap-3 mb-3">
@@ -1356,7 +1487,11 @@ export default function Resultados() {
             Estas áreas resultam do cruzamento entre as profissões com mais afinidade
             contigo e as provas de ingresso e disciplinas que lhes dão acesso no Secundário.
           </p>
+
+          {secaoPersonalidade(true)}
         </main>
+          </div>
+        </div>
       </div>
     );
   }
@@ -1364,46 +1499,12 @@ export default function Resultados() {
   return (
     <div className="min-h-screen bg-[#0F172A]">
       {/* Header */}
-      <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
-        <div className="h-full px-6 flex items-center justify-between">
-          <div className="text-2xl font-bold text-white">POPOV</div>
-          <div className="flex items-center gap-4">
-            <span className="text-[#94A3B8] text-sm">
-              {saldoCreditos ?? 0} {saldoCreditos === 1 ? "crédito" : "créditos"}
-            </span>
-            <button
-              onClick={() => navigate("/app")}
-              className="text-white text-sm hover:underline"
-            >
-              Os meus testes
-            </button>
-            <span className="text-[#94A3B8] text-sm">
-              {profile?.full_name || "Estudante"}
-            </span>
-            <a href="/app/perfil" className="text-white text-sm hover:underline">
-              O meu perfil
-            </a>
-            {result && (
-              <button
-                onClick={handleRecalculate}
-                disabled={recalculating}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-[#94A3B8] border border-[#334155] hover:border-[#2BA88C] hover:text-[#2BA88C] transition-colors disabled:opacity-50"
-                title="Recalcular resultados com os dados mais recentes"
-              >
-                <RefreshCw className={`w-3 h-3 ${recalculating ? "animate-spin" : ""}`} />
-                {recalculating ? "A recalcular..." : "Recalcular"}
-              </button>
-            )}
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
-            >
-              Sair
-            </button>
-          </div>
-        </div>
-      </header>
+        {renderHeaderCompleto()}
 
+      <div className="flex">
+        {renderIndice()}
+        <div className="flex-1 min-w-0">
+      {renderIndiceMobile()}
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
         {/* Hero */}
         <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-8 space-y-2">
@@ -1431,7 +1532,7 @@ export default function Resultados() {
         </section>
 
         {/* RIASEC */}
-        <section className="bg-[#1E293B] rounded-xl p-8">
+        <section id="sec-interesses" data-idx-label="Interesses" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-[#94A3B8] mb-6">
             Perfil de interesses RIASEC
           </h2>
@@ -1508,7 +1609,7 @@ export default function Resultados() {
         </section>
 
         {/* Inteligências — Pontos Fortes e Desafios */}
-        <section className="bg-[#1E293B] rounded-xl p-8">
+        <section id="sec-inteligencias" data-idx-label="Pontos fortes" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
           <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
 
             {/* Coluna esquerda — títulos descritivos */}
@@ -1648,7 +1749,7 @@ export default function Resultados() {
           };
 
           return (
-            <section className="bg-[#1E293B] rounded-xl p-8">
+            <section id="sec-itinerarios" data-idx-label="Itinerários" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
               <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
 
                 {/* Coluna esquerda */}
@@ -1696,7 +1797,7 @@ export default function Resultados() {
                 </div>
 
                 {/* Coluna direita — Radar */}
-                <div className="lg:col-span-2">
+                <div className="hidden lg:block lg:col-span-2">
                   <ResponsiveContainer width="100%" height={600}>
                     <RadarChart
                       data={radarData}
@@ -1745,7 +1846,7 @@ export default function Resultados() {
 
         {/* Profissões */}
         {topOccupations.length > 0 && (
-          <section className="space-y-4">
+          <section id="sec-profissoes" data-idx-label="Profissões" className="space-y-4 scroll-mt-24">
             <h2 className="text-sm font-semibold uppercase tracking-widest text-[#94A3B8]">
               Profissões com maior afinidade
             </h2>
@@ -1812,7 +1913,7 @@ export default function Resultados() {
           if (derivedTop3.length === 0) return null;
 
           return (
-            <section className="space-y-16">
+            <section id="sec-areas" data-idx-label="Áreas" className="space-y-16 scroll-mt-24">
               {derivedTop3.map(([cod]) => {
                 const Icon = CNAEF_ICONS[cod] ?? BookOpen;
                 const areaName = areaNameMapRef.current[cod];
@@ -1970,20 +2071,20 @@ export default function Resultados() {
           if (derivedTop3.length === 0) return null;
 
           return (
-            <section className="bg-[#1E293B] rounded-xl overflow-hidden">
+            <section id="sec-caminho" data-idx-label="Caminho" className="bg-[#1E293B] rounded-xl overflow-hidden scroll-mt-24">
               <div className="h-1.5 bg-[#2BA88C]" />
-              <div className="p-8">
+              <div className="p-6">
                 {/* Cabeçalho */}
                 <div className="flex items-center gap-3 mb-3">
                   <BookOpenCheck style={{ width: 32, height: 32, color: "#2BA88C", flexShrink: 0 }} />
                   <h2 className="text-2xl font-bold text-[#F1F5F9]">Escolhe o teu caminho</h2>
                 </div>
-                <p className="text-base text-[#94A3B8] leading-relaxed mb-8">
+                <p className="text-base text-[#94A3B8] leading-relaxed mb-5">
                   Agora que sabes quais são os teus itinerários recomendados, podes escolher o teu caminho. Aqui tens as profissões mais compatíveis em cada área e como podes aceder a elas.
                 </p>
 
                 {/* 3 cards em coluna */}
-                <div className="space-y-6">
+                <div className="space-y-4">
                   {derivedTop3.map(([cod, areaScore], cardIdx) => {
                     const Icon = CNAEF_ICONS[cod] ?? BookOpen;
                     const areaName = areaNameMapRef.current[cod];
@@ -2005,11 +2106,11 @@ export default function Resultados() {
                     return (
                       <div
                         key={cod}
-                        className="rounded-xl p-6"
+                        className="rounded-xl p-4"
                         style={{ backgroundColor: cardIdx === 0 ? "rgba(43,168,140,0.08)" : "#0F172A", border: cardIdx === 0 ? "1px solid #2BA88C" : "1px solid #334155" }}
                       >
                         {/* Cabeçalho do card */}
-                        <div className="flex items-center gap-3 mb-5">
+                        <div className="flex items-center gap-3 mb-3">
                           <Icon style={{ width: 24, height: 24, color: "#2BA88C", flexShrink: 0 }} />
                           <span className="text-lg font-bold text-[#F1F5F9]">{areaName}</span>
                           <span className="ml-auto text-base font-bold tabular-nums" style={{ color: "#2BA88C" }}>{areaPct}%</span>
@@ -2019,7 +2120,7 @@ export default function Resultados() {
                         {profs.length === 0 ? (
                           <p className="text-sm text-[#94A3B8]">Sem profissões disponíveis para esta área.</p>
                         ) : (
-                          <div className="space-y-5">
+                          <div className="space-y-3">
                             {profs.map(([esco, occ], pi) => {
                               const profPct = profMaxScore > 0 ? Math.round((occ.score / profMaxScore) * 100) : 0;
                               const isco = occ.isco_4dig;
@@ -2029,7 +2130,7 @@ export default function Resultados() {
                               const hasMore = formacoes.length > 3;
 
                               return (
-                                <div key={esco} className="grid grid-cols-1 lg:grid-cols-2 gap-3 pb-4" style={{ borderBottom: pi < profs.length - 1 ? "1px solid #1E293B" : "none" }}>
+                                <div key={esco} className="grid grid-cols-1 lg:grid-cols-2 gap-2 pb-2" style={{ borderBottom: pi < profs.length - 1 ? "1px solid #1E293B" : "none" }}>
                                   {/* Esquerda — profissão */}
                                   <div className="flex items-start gap-2">
                                     <span className="text-xs text-[#94A3B8] tabular-nums mt-0.5 w-4 shrink-0">{pi + 1}.</span>
@@ -2103,7 +2204,7 @@ export default function Resultados() {
         })()}
 
         {/* A Tua Recomendação */}
-        <section className="bg-[#1E293B] rounded-xl overflow-hidden">
+        <section id="sec-recomendacao" data-idx-label="Recomendação" className="bg-[#1E293B] rounded-xl overflow-hidden scroll-mt-24">
           <div className="h-1.5 bg-[#2BA88C]" />
           <div className="p-8">
             <div className="flex items-center gap-3 mb-3">
@@ -2142,6 +2243,8 @@ export default function Resultados() {
 
         {secaoPersonalidade(true)}
       </main>
+        </div>
+      </div>
     </div>
   );
 }
