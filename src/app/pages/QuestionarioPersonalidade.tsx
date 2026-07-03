@@ -325,24 +325,25 @@ export default function QuestionarioPersonalidade() {
     <div className="min-h-screen bg-[#0F172A]">
       {/* HEADER */}
       <header className="h-20 bg-[#0F172A] border-b border-[#334155] fixed top-0 left-0 right-0 z-50">
-        <div className="h-full px-6 flex items-center justify-between">
-          <div className="text-xl font-bold text-white">POPOV</div>
-          <div className="flex-1 max-w-xl mx-8">
+        <div className="h-full px-4 sm:px-6 flex items-center justify-between gap-3">
+          <button onClick={() => setShowExitModal(true)} className="text-xl font-bold text-white shrink-0">POPOV</button>
+          <div className="flex-1 min-w-0 max-w-xl mx-2 sm:mx-8">
             <div className="w-full h-2 bg-[#334155] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#2BA88C] transition-all duration-300"
                 style={{ width: `${progressPercentage}%` }}
               />
             </div>
-            <p className="text-xs text-[#94A3B8] mt-1 text-center">
+            <p className="text-xs text-[#94A3B8] mt-1 text-center truncate">
               {totalAnswered} de {TOTAL_QUESTIONS} respondidas
             </p>
           </div>
           <button
             onClick={() => setShowExitModal(true)}
-            className="px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
+            className="shrink-0 px-3 sm:px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
           >
-            Voltar ao painel
+            <span className="hidden sm:inline">Voltar ao painel</span>
+            <span className="sm:hidden">Sair</span>
           </button>
         </div>
       </header>
