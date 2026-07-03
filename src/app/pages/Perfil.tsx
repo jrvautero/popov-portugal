@@ -95,10 +95,12 @@ export default function Perfil() {
   return (
     <div className="min-h-screen bg-[#0F172A]">
       {/* HEADER */}
-      <header className="h-16 bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
-        <div className="h-full px-6 flex items-center justify-between">
-          <div className="text-2xl font-bold text-white">POPOV</div>
-          <div className="flex items-center gap-4">
+      <header className="bg-[#0F172A] border-b border-[#334155] sticky top-0 z-50">
+        <div className="h-16 px-4 sm:px-6 flex items-center justify-between gap-3">
+          <button onClick={() => navigate('/app')} className="text-2xl font-bold text-white shrink-0">POPOV</button>
+
+          {/* Desktop */}
+          <div className="hidden sm:flex items-center gap-4">
             <span className="text-[#94A3B8] text-sm">{profile?.full_name || 'Estudante'}</span>
             <a
               href="/app"
@@ -113,6 +115,14 @@ export default function Perfil() {
               Sair
             </button>
           </div>
+
+          {/* Mobile */}
+          <button
+            onClick={handleSignOut}
+            className="sm:hidden shrink-0 px-4 py-2 bg-[#334155] text-white rounded-lg text-sm font-medium hover:bg-[#475569] transition-colors"
+          >
+            Sair
+          </button>
         </div>
       </header>
 
