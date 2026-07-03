@@ -418,7 +418,7 @@ export default function QuestionarioPersonalidade() {
                       Pergunta {index + 1} de {TOTAL_QUESTIONS}
                     </p>
                     <p className="text-lg text-white mb-6 leading-relaxed">{item.texto_pt}</p>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
                       {likertOptions.map((option) => {
                         const isSelected = currentAnswer === option.value;
                         return (
@@ -426,7 +426,7 @@ export default function QuestionarioPersonalidade() {
                             key={option.value}
                             onClick={() => handleAnswer(item.id, option.value)}
                             className={`
-                              px-4 py-2 rounded-full text-sm font-medium transition-all
+                              w-full text-center px-3 py-2 rounded-lg text-sm font-medium transition-all
                               ${isSelected
                                 ? 'bg-[rgba(43,168,140,0.2)] border-2 border-[#2BA88C] text-white'
                                 : 'bg-[#0F172A] border border-[#334155] text-[#94A3B8] hover:bg-[#334155] hover:border-[#2BA88C]'
