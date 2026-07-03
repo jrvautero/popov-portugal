@@ -65,6 +65,17 @@ const RIASEC_NAMES: Record<string, string> = {
   "6": "Convencional",
 };
 
+// Interpretações RIASEC adaptadas do documento para linguagem do 9.º ano.
+// (A rever pelo Jaisso — baseadas nos textos originais do documento.)
+const RIASEC_INTERP: Record<string, string> = {
+  "1": "Gostas de pôr as mãos na massa e de ver resultados concretos. Preferes trabalhar com ferramentas, máquinas, plantas ou animais, e atividades mais práticas. És direto e bom a resolver problemas reais, mais do que a lidar só com teorias.",
+  "2": "Gostas de perceber como as coisas funcionam e de descobrir o porquê. Curtes desafios, lógica, matemática e resolver problemas difíceis. És curioso(a), observador(a) e gostas de investigar e aprender.",
+  "3": "Gostas de criar e de te expressares à tua maneira. Valorizas a imaginação, as ideias diferentes e a liberdade para fazer as coisas sem regras muito rígidas. Sentes-te bem quando podes mostrar o que pensas e sentes.",
+  "4": "Gostas de ajudar, ensinar e estar com pessoas. Dás-te bem em grupo e comunicas com facilidade. Preocupas-te com o bem-estar dos outros e sentes-te útil quando podes apoiar alguém.",
+  "5": "Gostas de liderar, convencer e pôr ideias em ação. Tens à-vontade para falar e influenciar os outros, e preferes desafios a rotinas. Curtes movimento, iniciativa e estar à frente das coisas.",
+  "6": "És organizado(a), cuidadoso(a) e gostas de ter tudo em ordem. Dás-te bem com tarefas claras, com regras e com atenção ao detalhe. Preferes saber o que se espera de ti a situações confusas ou sem estrutura.",
+};
+
 const RIASEC_COLORS: Record<string, string> = {
   "1": "#4F8FFF",
   "2": "#6C5CE7",
@@ -82,6 +93,17 @@ const INTEL_NAMES: Record<string, string> = {
   "5": "Musical",
   "6": "Interpessoal",
   "7": "Intrapessoal",
+};
+
+// "Como estudas melhor" — dicas por inteligência, do documento (linguagem de 9.º ano).
+const ESTUDO_POR_INTEL: Record<string, { como: string; dicas: string[]; livres: string }> = {
+  "1": { como: "Aprendes melhor a ler e a escrever.", dicas: ["Lê em voz alta a matéria que estás a estudar", "Tira notas quando o professor está a dar matéria", "Copia a matéria e escreve resumos"], livres: "Nos tempos livres: lê, escreve, junta-te a um clube do livro ou a um grupo de teatro." },
+  "2": { como: "Aprendes melhor a resolver problemas e a usar raciocínio lógico.", dicas: ["Faz um esquema da matéria", "Organiza a matéria por categorias", "Cria tabelas e gráficos com a informação"], livres: "Nos tempos livres: faz puzzles e quebra-cabeças ou jogos lógicos e matemáticos." },
+  "3": { como: "Aprendes melhor através daquilo que vês.", dicas: ["Procura imagens e vídeos sobre os temas", "Sublinha e resume com cores em esquemas e gráficos", "Cria posters, apresentações ou vídeos da matéria"], livres: "Nos tempos livres: jogos de montar (como Legos), fotografa o que te cativa, segue mapas em passeios." },
+  "4": { como: "Aprendes melhor usando o corpo, com tarefas práticas e movimento.", dicas: ["Revê os apontamentos em movimento, anda pela sala", "Constrói algo com as mãos a partir da matéria", "Usa o teatro e a mímica para representar o que estudas"], livres: "Nos tempos livres: pratica desporto, dança ou junta-te a um grupo de teatro." },
+  "5": { como: "Aprendes melhor com música, canções, rimas e ritmos.", dicas: ["Canta uma matéria mais difícil", "Cria um ritmo com palmas para memorizar", "Escolhe uma música de fundo para o estudo"], livres: "Nos tempos livres: toca um instrumento, ouve música, junta-te a um coro ou banda." },
+  "6": { como: "Aprendes melhor em relação com os outros.", dicas: ["Explora as matérias e tira dúvidas com colegas", "Colabora em projetos de grupo", "Participa em debates sobre as matérias"], livres: "Nos tempos livres: junta-te a um grupo de debate, pratica desportos de equipa." },
+  "7": { como: "Aprendes melhor a refletir e a trabalhar de forma independente.", dicas: ["Escreve um diário das tuas aprendizagens", "Trabalha sozinho num local sossegado", "Faz um pequeno resumo do que aprendeste no fim"], livres: "Nos tempos livres: ouve música, faz ioga, pinta, escreve, medita." },
 };
 
 const AREA_DESCRIPTIONS: Record<string, string> = {
@@ -294,6 +316,7 @@ export default function Resultados() {
   const [activeSection, setActiveSection] = useState<string>("");
   const [menuHeaderAberto, setMenuHeaderAberto] = useState(false);
   const [seccoesAberto, setSeccoesAberto] = useState(false);
+  const [profSel9, setProfSel9] = useState<{ prof: string; area: string; mymentor: string | null; cursos: { nome: string }[] } | null>(null);
 
   useEffect(() => {
     loadResults();
@@ -1176,6 +1199,59 @@ export default function Resultados() {
             </div>
           </section>
 
+          {/* Interesses (RIASEC) */}
+          <section id="sec9-interesses" data-idx-label="Interesses" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+            <div className="flex items-center gap-3 mb-2">
+              <Star style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
+              <h2 className="text-2xl font-bold text-[#F1F5F9]">Os teus interesses</h2>
+            </div>
+            <p className="text-sm text-[#94A3B8] mb-6">
+              A forma como gostas de lidar com as coisas e com as pessoas. Os dois primeiros são os que mais têm a ver contigo.
+            </p>
+            {(() => {
+              const ordenadoRia = Object.entries(result.riasec_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
+              const dominantes = ordenadoRia.slice(0, 2);
+              const restantes = ordenadoRia.slice(2);
+              return (
+                <>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                    {dominantes.map(([cod]) => {
+                      const Icon = RIASEC_ICONS[cod] ?? BookOpen;
+                      return (
+                        <div
+                          key={cod}
+                          className="rounded-lg p-6"
+                          style={{ backgroundColor: "rgba(43,168,140,0.08)", border: "1px solid #2BA88C" }}
+                        >
+                          <div className="flex items-center gap-2 mb-3">
+                            <Icon style={{ width: 24, height: 24, color: "#2BA88C", flexShrink: 0 }} />
+                            <h3 className="text-lg font-bold text-[#F1F5F9]">{RIASEC_NAMES[cod] ?? cod}</h3>
+                          </div>
+                          <p className="text-sm text-[#F1F5F9] leading-relaxed">{RIASEC_INTERP[cod]}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {restantes.length > 0 && (
+                    <div>
+                      <p className="text-xs uppercase tracking-wider text-[#94A3B8] font-semibold mb-3">
+                        Também presentes em ti
+                      </p>
+                      <div className="space-y-3">
+                        {restantes.map(([cod]) => (
+                          <div key={cod} className="rounded-lg p-4" style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}>
+                            <p className="text-sm font-semibold text-[#F1F5F9] mb-1">{RIASEC_NAMES[cod] ?? cod}</p>
+                            <p className="text-xs text-[#94A3B8] leading-relaxed">{RIASEC_INTERP[cod]}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </section>
+
           {/* Detalhe por área */}
           <section id="sec9-areas" data-idx-label="Áreas" className="space-y-6 scroll-mt-24">
             {ordered.map(([code, score], i) => {
@@ -1248,123 +1324,93 @@ export default function Resultados() {
             })}
           </section>
 
-          {/* As tuas inteligências */}
-          <section id="sec9-inteligencias" data-idx-label="Inteligências" className="bg-[#1E293B] rounded-xl p-8 space-y-8 scroll-mt-24">
-            <div className="flex items-center gap-3">
-              <Calculator style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
-              <h2 className="text-2xl font-bold text-[#F1F5F9]">As tuas inteligências</h2>
-            </div>
-
-            {/* Parte A — resultado direto do teste */}
-            <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8] mb-1">
-                Resultado do teste
-              </h3>
-              <p className="text-xs text-[#94A3B8] mb-4">
-                As tuas pontuações nas sete inteligências múltiplas.
-              </p>
-              <div className="space-y-2">
-                {Object.entries(result.intel_scores ?? {})
-                  .sort((a, b) => Number(b[1]) - Number(a[1]))
-                  .map(([cod, sc]) => (
-                    <div key={cod} className="flex items-center gap-3">
-                      <span className="text-sm text-[#F1F5F9] w-44 shrink-0 truncate">
-                        {INTEL_NAMES[cod] ?? cod}
-                      </span>
-                      <div className="flex-1 h-2.5 bg-[#0F172A] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#2BA88C]" style={{ width: `${sc}%` }} />
-                      </div>
-                      <span className="text-xs font-bold tabular-nums text-[#2BA88C] w-9 text-right shrink-0">
-                        {sc}%
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-
-            {/* Parte B — comparação com as disciplinas */}
-            {(() => {
-              const INTEL_DISCIPLINAS: Record<string, string[]> = {
-                "2": [
-                  "Matemática A",
-                  "Física e Química A",
-                  "Biologia e Geologia",
-                  "Economia A",
-                  "Matemática Aplicada às Ciências Sociais (MACS)",
-                ],
-                "3": [
-                  "Geografia A",
-                  "Desenho A",
-                  "Geometria Descritiva A",
-                  "História da Cultura e das Artes",
-                ],
-                "1": [
-                  "Português",
-                  "Literatura Portuguesa",
-                  "Latim A",
-                  "História A",
-                  "Filosofia",
-                  "Inglês",
-                ],
-              };
-              const ordem = ["1", "2", "3"].sort(
-                (a, b) => (result.intel_scores?.[b] ?? 0) - (result.intel_scores?.[a] ?? 0)
-              );
-              const nivelDe = (s: number) => (s >= 67 ? "forte" : s >= 40 ? "medio" : "fraco");
-              return (
-                <div>
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-[#94A3B8] mb-1">
-                    Comparação com as disciplinas
-                  </h3>
-                  <p className="text-xs text-[#94A3B8] mb-4">
-                    Cada inteligência sustenta certas disciplinas do Secundário. Se o teu escore numa
-                    inteligência é alto, essas disciplinas tendem a favorecer-te (<span style={{ color: "#2BA88C" }}>perto</span>);
-                    se é baixo, são as que vais sentir mais exigentes (<span style={{ color: "#EF4444" }}>longe</span>).
-                    Da maior para a menor.
-                  </p>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    {ordem.map((cod) => {
-                      const sc = result.intel_scores?.[cod] ?? 0;
-                      const nm = nivelMeta[nivelDe(sc)];
-                      return (
-                        <div
-                          key={cod}
-                          className="rounded-lg p-5"
-                          style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-bold text-[#F1F5F9]">
-                              {INTEL_NAMES[cod] ?? cod}
-                            </span>
-                            <span
-                              className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                              style={{ color: nm.color, backgroundColor: `${nm.color}22` }}
-                            >
-                              {nm.label} · {sc}%
-                            </span>
-                          </div>
-                          <p className="text-xs text-[#94A3B8] mb-2">
-                            Disciplinas que dependem desta inteligência:
-                          </p>
-                          <ul className="space-y-1">
-                            {INTEL_DISCIPLINAS[cod].map((disc) => (
-                              <li key={disc} className="text-sm text-[#F1F5F9] leading-snug">
-                                · {disc}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-[#94A3B8] leading-relaxed mt-4">
-                    As outras quatro inteligências — Corporal-cinestésica, Musical, Interpessoal e
-                    Intrapessoal — não têm disciplina correspondente nos Cursos Científico-Humanísticos,
-                    por isso não entram nesta comparação.
-                  </p>
+          {/* Profissões sugeridas (cartões, fora das áreas) */}
+          {(() => {
+            const detalhe = result.cch_detailed ?? {};
+            const mapProf = new Map<string, { esco: string; prof: string; mymentor: string | null; match: number; area: string; cursos: { nome: string }[] }>();
+            ordered.forEach(([code]) => {
+              const det = detalhe[code];
+              const areaNome = CCH_AREAS[code]?.nome ?? code;
+              const cursos = (det?.cursos ?? []).map((c) => ({ nome: c.nome }));
+              (det?.profissoes ?? []).forEach((p) => {
+                const ex = mapProf.get(p.esco);
+                if (!ex || p.match > ex.match) {
+                  mapProf.set(p.esco, { esco: p.esco, prof: p.prof, mymentor: p.mymentor, match: p.match, area: areaNome, cursos });
+                }
+              });
+            });
+            const profs = [...mapProf.values()].sort((a, b) => b.match - a.match);
+            if (profs.length === 0) return null;
+            const maxMatch = profs[0].match || 1;
+            return (
+              <section id="sec9-profissoes" data-idx-label="Profissões" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+                <div className="flex items-center gap-3 mb-2">
+                  <Briefcase style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
+                  <h2 className="text-2xl font-bold text-[#F1F5F9]">Profissões que podem ser para ti</h2>
                 </div>
-              );
-            })()}
+                <p className="text-sm text-[#94A3B8] mb-6">
+                  Uma seleção de caminhos que combinam contigo. Toca numa para saber como se lá chega e onde estudar.
+                </p>
+                <div className="flex flex-col gap-3">
+                  {profs.map((p) => {
+                    const rel = p.match / maxMatch;
+                    const dot = rel >= 0.8 ? 11 : rel >= 0.55 ? 9 : 7;
+                    const op = rel >= 0.8 ? 1 : rel >= 0.55 ? 0.75 : 0.5;
+                    return (
+                      <button
+                        key={p.esco}
+                        onClick={() => setProfSel9({ prof: p.prof, area: p.area, mymentor: p.mymentor, cursos: p.cursos })}
+                        className="flex items-center gap-3 bg-[#0F172A] border border-[#334155] hover:border-[#2BA88C] rounded-xl p-4 text-left transition-colors"
+                      >
+                        <span
+                          className="rounded-full bg-[#2BA88C] shrink-0"
+                          style={{ width: dot, height: dot, opacity: op }}
+                        />
+                        <span className="text-sm text-[#F1F5F9] flex-1 min-w-0">{p.prof}</span>
+                        <ChevronRight style={{ width: 18, height: 18, color: "#2BA88C", flexShrink: 0 }} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })()}
+
+          {/* As tuas inteligências */}
+          {/* Como estudas melhor */}
+          <section id="sec9-estudo" data-idx-label="Como estudas melhor" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+            <div className="flex items-center gap-3 mb-2">
+              <Calculator style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
+              <h2 className="text-2xl font-bold text-[#F1F5F9]">Como estudas melhor</h2>
+            </div>
+            <p className="text-sm text-[#94A3B8] mb-6">
+              Cada pessoa aprende à sua maneira. Estas são as tuas formas mais fortes de aprender e algumas ideias para as usares a teu favor.
+            </p>
+            <div className="space-y-4">
+              {Object.entries(result.intel_scores ?? {})
+                .sort((a, b) => Number(b[1]) - Number(a[1]))
+                .slice(0, 3)
+                .map(([cod]) => {
+                  const info = ESTUDO_POR_INTEL[cod];
+                  const Icon = INTEL_ICONS[cod] ?? BookOpen;
+                  if (!info) return null;
+                  return (
+                    <div key={cod} className="rounded-lg p-6" style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Icon style={{ width: 22, height: 22, color: "#2BA88C", flexShrink: 0 }} />
+                        <h3 className="text-lg font-bold text-[#F1F5F9]">{INTEL_NAMES[cod] ?? cod}</h3>
+                      </div>
+                      <p className="text-sm text-[#F1F5F9] mb-3">{info.como}</p>
+                      <ul className="space-y-1 mb-3">
+                        {info.dicas.map((d, i) => (
+                          <li key={i} className="text-sm text-[#94A3B8]">· {d}</li>
+                        ))}
+                      </ul>
+                      <p className="text-xs text-[#94A3B8] italic">{info.livres}</p>
+                    </div>
+                  );
+                })}
+            </div>
           </section>
 
           {/* A tua recomendação */}
@@ -1414,6 +1460,54 @@ export default function Resultados() {
         </main>
           </div>
         </div>
+
+        {/* Painel da profissão selecionada */}
+        {profSel9 && (
+          <div
+            className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 p-4"
+            onClick={() => setProfSel9(null)}
+          >
+            <div
+              className="bg-[#1E293B] border border-[#334155] rounded-2xl p-6 w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <h3 className="text-lg font-bold text-[#F1F5F9]">{profSel9.prof}</h3>
+                <button
+                  onClick={() => setProfSel9(null)}
+                  aria-label="Fechar"
+                  className="text-[#94A3B8] text-xl leading-none shrink-0"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="bg-[#0F172A] border border-[#334155] rounded-lg p-3 mb-4">
+                <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-1">Chega-se por aqui</p>
+                <p className="text-sm text-[#F1F5F9]">{profSel9.area}</p>
+              </div>
+              {profSel9.cursos.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-2">Formações sugeridas</p>
+                  <div className="space-y-1">
+                    {profSel9.cursos.slice(0, 5).map((c, i) => (
+                      <p key={i} className="text-sm text-[#F1F5F9]">· {c.nome}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {buildMymentorUrl(profSel9.mymentor) && (
+                <a
+                  href={buildMymentorUrl(profSel9.mymentor)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 text-[#2BA88C] bg-[rgba(43,168,140,0.1)] border border-[#2BA88C] rounded-lg py-3 text-sm font-medium hover:bg-[rgba(43,168,140,0.18)] transition-colors"
+                >
+                  <ExternalLink style={{ width: 16, height: 16 }} /> Ver no MyMentor
+                </a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
