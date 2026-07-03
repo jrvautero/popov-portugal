@@ -1487,6 +1487,8 @@ export default function Resultados() {
             Estas áreas resultam do cruzamento entre as profissões com mais afinidade
             contigo e as provas de ingresso e disciplinas que lhes dão acesso no Secundário.
           </p>
+
+          {secaoPersonalidade(true)}
         </main>
           </div>
         </div>
