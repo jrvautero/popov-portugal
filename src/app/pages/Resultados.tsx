@@ -1184,8 +1184,6 @@ export default function Resultados() {
               const disciplinas = (det?.disciplinas ?? [])
                 .slice()
                 .sort((a, b) => (b.match !== a.match ? b.match - a.match : b.peso - a.peso));
-              const cursos = det?.cursos ?? [];
-              const profissoes = det?.profissoes ?? [];
               const isTop = i === 0;
               return (
                 <div
@@ -1198,21 +1196,18 @@ export default function Resultados() {
                 >
                   <div className="p-6 lg:p-8">
                     {/* Cabeçalho da área */}
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-2xl font-bold tabular-nums shrink-0" style={{ color: isTop ? "#2BA88C" : "#94A3B8" }}>
+                        #{i + 1}
+                      </span>
                       <BookOpenCheck style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
                       <h2 className="text-xl font-bold text-[#F1F5F9]">
-                        {i + 1}. {meta?.nome ?? code}
+                        {meta?.nome ?? code}
                       </h2>
-                      <span className="ml-auto text-lg font-bold tabular-nums" style={{ color: "#2BA88C" }}>
-                        {score}%
-                      </span>
-                    </div>
-                    <div className="w-full h-2 bg-[#0F172A] rounded-full overflow-hidden mb-4">
-                      <div className="h-full bg-[#2BA88C]" style={{ width: `${score}%` }} />
                     </div>
                     <p className="text-sm text-[#94A3B8] leading-relaxed mb-6">{meta?.desc}</p>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1">
                       {/* Disciplinas + alinhamento de inteligência */}
                       <div className="rounded-lg p-5" style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}>
                         <div className="flex items-center gap-2 mb-1">
@@ -1243,79 +1238,6 @@ export default function Resultados() {
                                 </div>
                               </li>
                             ))}
-                          </ul>
-                        )}
-                      </div>
-
-                      {/* Cursos */}
-                      <div className="rounded-lg p-5" style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <GraduationCap style={{ width: 18, height: 18, color: "#2BA88C", flexShrink: 0 }} />
-                          <span className="text-sm uppercase tracking-wider font-semibold text-[#F1F5F9]">
-                            Cursos que combinam
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#94A3B8] mb-3">
-                          Cursos do Superior a que esta área dá acesso e que mais combinam contigo.
-                        </p>
-                        {cursos.length === 0 ? (
-                          <p className="text-sm text-[#94A3B8]">Sem dados.</p>
-                        ) : (
-                          <ul className="space-y-1.5">
-                            {cursos.map((c, ci) => (
-                              <li key={ci} className="flex items-center justify-between gap-2">
-                                <span className="text-sm text-[#F1F5F9] leading-snug min-w-0 flex-1">
-                                  · {c.nome}
-                                </span>
-                                <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: "#2BA88C" }}>
-                                  {c.match}%
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-
-                      {/* Profissões */}
-                      <div className="rounded-lg p-5" style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Briefcase style={{ width: 18, height: 18, color: "#2BA88C", flexShrink: 0 }} />
-                          <span className="text-sm uppercase tracking-wider font-semibold text-[#F1F5F9]">
-                            Profissões próximas
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#94A3B8] mb-3">
-                          Profissões com mais afinidade contigo nesta área. Clica para saberes mais.
-                        </p>
-                        {profissoes.length === 0 ? (
-                          <p className="text-sm text-[#94A3B8]">Sem dados.</p>
-                        ) : (
-                          <ul className="space-y-2">
-                            {profissoes.map((p) => {
-                              const url = buildMymentorUrl(p.mymentor);
-                              return (
-                                <li key={p.esco} className="flex items-center justify-between gap-2">
-                                  {url ? (
-                                    <a
-                                      href={url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="group inline-flex items-start gap-1 text-sm text-[#F1F5F9] hover:text-[#2BA88C] hover:underline transition-colors min-w-0 flex-1"
-                                    >
-                                      <span className="break-words">{p.prof}</span>
-                                      <ExternalLink
-                                        style={{ width: 12, height: 12, color: "#2BA88C", flexShrink: 0, marginTop: 3 }}
-                                      />
-                                    </a>
-                                  ) : (
-                                    <span className="text-sm text-[#F1F5F9] flex-1 min-w-0 break-words">{p.prof}</span>
-                                  )}
-                                  <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: "#2BA88C" }}>
-                                    {p.match}%
-                                  </span>
-                                </li>
-                              );
-                            })}
                           </ul>
                         )}
                       </div>

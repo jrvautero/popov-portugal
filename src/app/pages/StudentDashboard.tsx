@@ -139,7 +139,7 @@ export default function StudentDashboard() {
   };
 
   const cards: CardConfig[] = [
-    { id: 'intro', title: 'Sobre o POPOV', icon: Info, locked: false },
+    { id: 'intro', title: 'Vamos começar', icon: Info, locked: false },
     { id: 'assessment', title: 'Os teus testes', icon: ClipboardList, locked: !introVisited },
     { id: 'results', title: 'Os teus resultados', icon: BarChart3, locked: !todosConcluidos || !hasResults },
   ];
@@ -358,10 +358,19 @@ export default function StudentDashboard() {
           {/* SOBRE O POPOV — introdução curta */}
           {selectedCard === 'intro' && (
             <div>
-              <h2 className="text-2xl font-bold text-white mb-6">Sobre o POPOV</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Vamos começar</h2>
               <div className="space-y-4 text-base text-[#F1F5F9] leading-relaxed">
                 <p>
-                  O POPOV ajuda-te a descobrir as áreas, profissões e cursos que mais combinam contigo. Fazes os testes ao teu ritmo e recebes um resultado personalizado.
+                  Escolher uma área ou um curso pode parecer complicado. Este programa foi criado para te ajudar a conheceres-te melhor e a descobrires diferentes caminhos que podem fazer sentido para ti.
+                </p>
+                <p>
+                  Um questionário sobre aquilo de que gostas, e outro sobre a forma como aprendes e utilizas as tuas capacidades.
+                </p>
+                <p>
+                  Não existem respostas certas ou erradas. O mais importante é responderes de forma espontânea, escolhendo a opção que mais se aproxima daquilo que és normalmente. Se parecer que "não sabes" a resposta — pensa bem, é sobre ti, portanto só tu podes saber.
+                </p>
+                <p>
+                  No final vais receber um relatório personalizado que te ajudará a compreender melhor os teus interesses, reconhecer os teus pontos fortes e explorar áreas de estudo e profissões onde é mais provável que te identifiques.
                 </p>
               </div>
               <button
