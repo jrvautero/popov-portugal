@@ -1125,9 +1125,9 @@ export default function Resultados() {
             </h1>
             <p className="text-[#94A3B8] leading-relaxed pt-1">
               Estás no 9.º ano e a tua próxima escolha é a área do Secundário. Com base
-              nos teus interesses e competências, estas são as quatro áreas dos Cursos
-              Científico-Humanísticos ordenadas pela afinidade com o teu perfil. Não é
-              uma decisão fechada — é um ponto de partida informado.
+              no que gostas e na forma como aprendes, estas são as quatro áreas dos Cursos
+              Científico-Humanísticos pela ordem que mais combina contigo. Não é
+              uma decisão fechada — é um ponto de partida para explorares.
             </p>
           </section>
 
@@ -1297,7 +1297,7 @@ export default function Resultados() {
                           </span>
                         </div>
                         <p className="text-xs text-[#94A3B8] mb-3">
-                          O quanto as profissões e cursos que combinam contigo passam por cada disciplina.
+                          As disciplinas que mais pesam nesta área.
                         </p>
                         {disciplinas.length === 0 ? (
                           <p className="text-sm text-[#94A3B8]">Sem dados.</p>
@@ -1389,7 +1389,7 @@ export default function Resultados() {
                 <Star style={{ width: 32, height: 32, color: "#2BA88C", flexShrink: 0 }} />
                 <h2 className="text-2xl font-bold text-[#F1F5F9]">A tua recomendação</h2>
               </div>
-              <p className="text-base text-[#94A3B8] mb-8">
+              <p className="text-sm text-[#94A3B8] mb-8">
                 Análise personalizada sobre a escolha da tua área do Secundário.
               </p>
 
@@ -1456,8 +1456,8 @@ export default function Resultados() {
           </section>
 
           <p className="text-xs text-[#94A3B8] leading-relaxed">
-            Estas áreas resultam do cruzamento entre as profissões com mais afinidade
-            contigo e as provas de ingresso e disciplinas que lhes dão acesso no Secundário.
+            Estas áreas foram escolhidas cruzando o que combina contigo com as
+            disciplinas que abrem caminho a cada uma no Secundário.
           </p>
         </main>
           </div>
