@@ -1426,33 +1426,64 @@ export default function Resultados() {
               <h2 className="text-2xl font-bold text-[#F1F5F9]">Como estudas melhor</h2>
             </div>
             <p className="text-sm text-[#94A3B8] mb-6">
-              Cada pessoa aprende à sua maneira. Estas são as tuas formas mais fortes de aprender e algumas ideias para as usares a teu favor.
+              Cada pessoa aprende à sua maneira. Aqui vês onde tens mais e menos, e ideias para estudares a teu favor.
             </p>
-            <div className="divide-y divide-[#334155]">
-              {Object.entries(result.intel_scores ?? {})
-                .sort((a, b) => Number(b[1]) - Number(a[1]))
-                .slice(0, 3)
-                .map(([cod]) => {
-                  const info = ESTUDO_POR_INTEL[cod];
-                  const Icon = INTEL_ICONS[cod] ?? BookOpen;
-                  if (!info) return null;
-                  return (
-                    <div key={cod} className="py-5 first:pt-0 last:pb-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Icon style={{ width: 22, height: 22, color: "#2BA88C", flexShrink: 0 }} />
-                        <h3 className="text-lg font-bold text-[#F1F5F9]">{INTEL_NAMES[cod] ?? cod}</h3>
-                      </div>
-                      <p className="text-sm text-[#F1F5F9] mb-2">{info.como}</p>
-                      <ul className="space-y-1 mb-2">
-                        {info.dicas.map((d, i) => (
-                          <li key={i} className="text-sm text-[#94A3B8]">· {d}</li>
-                        ))}
-                      </ul>
-                      <p className="text-xs text-[#94A3B8] italic">{info.livres}</p>
-                    </div>
-                  );
-                })}
-            </div>
+            {(() => {
+              const ordenadoInt = Object.entries(result.intel_scores ?? {}).sort((a, b) => Number(b[1]) - Number(a[1]));
+              const maxInt = Number(ordenadoInt[0]?.[1]) || 1;
+              const dominantesInt = ordenadoInt.slice(0, 3);
+              return (
+                <>
+                  {/* Resultado do teste — do que tens mais ao que tens menos, sem número */}
+                  <div className="space-y-3 mb-8">
+                    {ordenadoInt.map(([cod, sc], i) => {
+                      const rel = Math.max(12, Math.round((Number(sc) / maxInt) * 100));
+                      const forte = i < 3;
+                      return (
+                        <div key={cod}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm" style={{ color: forte ? "#F1F5F9" : "#94A3B8" }}>
+                              {INTEL_NAMES[cod] ?? cod}
+                            </span>
+                            {i === 0 && <span className="text-xs text-[#2BA88C]">o que tens mais</span>}
+                            {i === ordenadoInt.length - 1 && <span className="text-xs text-[#64748B]">o que tens menos</span>}
+                          </div>
+                          <div className="h-2 bg-[#334155] rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${rel}%`, backgroundColor: forte ? "#2BA88C" : "#5f7d76" }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Dicas ligadas ao resultado */}
+                  <div className="divide-y divide-[#334155]">
+                    {dominantesInt.map(([cod]) => {
+                      const info = ESTUDO_POR_INTEL[cod];
+                      const Icon = INTEL_ICONS[cod] ?? BookOpen;
+                      if (!info) return null;
+                      return (
+                        <div key={cod} className="py-5 first:pt-0 last:pb-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Icon style={{ width: 22, height: 22, color: "#2BA88C", flexShrink: 0 }} />
+                            <h3 className="text-lg font-bold text-[#F1F5F9]">{INTEL_NAMES[cod] ?? cod}</h3>
+                          </div>
+                          <p className="text-sm text-[#F1F5F9] mb-2">
+                            Como tens mais nesta forma, {info.como.charAt(0).toLowerCase() + info.como.slice(1)}
+                          </p>
+                          <ul className="space-y-1 mb-2">
+                            {info.dicas.map((d, i) => (
+                              <li key={i} className="text-sm text-[#94A3B8]">· {d}</li>
+                            ))}
+                          </ul>
+                          <p className="text-xs text-[#94A3B8] italic">{info.livres}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
           </section>
 
           <p className="text-xs text-[#94A3B8] leading-relaxed">
