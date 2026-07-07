@@ -1131,6 +1131,9 @@ export default function Resultados() {
             </p>
           </section>
 
+          {/* Personalidade */}
+          {secaoPersonalidade(true)}
+
           {/* Interesses (RIASEC) */}
           <section id="sec9-interesses" data-idx-label="Interesses" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
             <div className="flex items-center gap-3 mb-2">
@@ -1138,15 +1141,35 @@ export default function Resultados() {
               <h2 className="text-2xl font-bold text-[#F1F5F9]">Os teus interesses</h2>
             </div>
             <p className="text-sm text-[#94A3B8] mb-6">
-              A forma como gostas de lidar com as coisas e com as pessoas. Os dois primeiros são os que mais têm a ver contigo.
+              A forma como gostas de lidar com as coisas e com as pessoas, do que tens mais para o que tens menos.
             </p>
             {(() => {
               const ordenadoRia = Object.entries(result.riasec_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
+              const maxRia = Number(ordenadoRia[0]?.[1]) || 1;
               const dominantes = ordenadoRia.slice(0, 2);
-              const restantes = ordenadoRia.slice(2);
               return (
                 <>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                  <div className="space-y-3 mb-8">
+                    {ordenadoRia.map(([cod, sc], i) => {
+                      const rel = Math.max(12, Math.round((Number(sc) / maxRia) * 100));
+                      const forte = i < 2;
+                      return (
+                        <div key={cod}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm" style={{ color: forte ? "#F1F5F9" : "#94A3B8" }}>
+                              {RIASEC_NAMES[cod] ?? cod}
+                            </span>
+                            {i === 0 && <span className="text-xs text-[#2BA88C]">o que tens mais</span>}
+                            {i === ordenadoRia.length - 1 && <span className="text-xs text-[#64748B]">o que tens menos</span>}
+                          </div>
+                          <div className="h-2 bg-[#334155] rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${rel}%`, backgroundColor: forte ? "#2BA88C" : "#5f7d76" }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {dominantes.map(([cod]) => {
                       const Icon = RIASEC_ICONS[cod] ?? BookOpen;
                       return (
@@ -1164,21 +1187,6 @@ export default function Resultados() {
                       );
                     })}
                   </div>
-                  {restantes.length > 0 && (
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-[#94A3B8] font-semibold mb-3">
-                        Também presentes em ti
-                      </p>
-                      <div className="space-y-3">
-                        {restantes.map(([cod]) => (
-                          <div key={cod} className="rounded-lg p-4" style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}>
-                            <p className="text-sm font-semibold text-[#F1F5F9] mb-1">{RIASEC_NAMES[cod] ?? cod}</p>
-                            <p className="text-xs text-[#94A3B8] leading-relaxed">{RIASEC_INTERP[cod]}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </>
               );
             })()}
@@ -1373,42 +1381,6 @@ export default function Resultados() {
           })()}
 
           {/* As tuas inteligências */}
-          {/* Como estudas melhor */}
-          <section id="sec9-estudo" data-idx-label="Como estudas melhor" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-            <div className="flex items-center gap-3 mb-2">
-              <Calculator style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
-              <h2 className="text-2xl font-bold text-[#F1F5F9]">Como estudas melhor</h2>
-            </div>
-            <p className="text-sm text-[#94A3B8] mb-6">
-              Cada pessoa aprende à sua maneira. Estas são as tuas formas mais fortes de aprender e algumas ideias para as usares a teu favor.
-            </p>
-            <div className="space-y-4">
-              {Object.entries(result.intel_scores ?? {})
-                .sort((a, b) => Number(b[1]) - Number(a[1]))
-                .slice(0, 3)
-                .map(([cod]) => {
-                  const info = ESTUDO_POR_INTEL[cod];
-                  const Icon = INTEL_ICONS[cod] ?? BookOpen;
-                  if (!info) return null;
-                  return (
-                    <div key={cod} className="rounded-lg p-6" style={{ backgroundColor: "#0F172A", border: "1px solid #334155" }}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <Icon style={{ width: 22, height: 22, color: "#2BA88C", flexShrink: 0 }} />
-                        <h3 className="text-lg font-bold text-[#F1F5F9]">{INTEL_NAMES[cod] ?? cod}</h3>
-                      </div>
-                      <p className="text-sm text-[#F1F5F9] mb-3">{info.como}</p>
-                      <ul className="space-y-1 mb-3">
-                        {info.dicas.map((d, i) => (
-                          <li key={i} className="text-sm text-[#94A3B8]">· {d}</li>
-                        ))}
-                      </ul>
-                      <p className="text-xs text-[#94A3B8] italic">{info.livres}</p>
-                    </div>
-                  );
-                })}
-            </div>
-          </section>
-
           {/* A tua recomendação */}
           <section id="sec9-recomendacao" data-idx-label="Recomendação" className="bg-[#1E293B] rounded-xl overflow-hidden scroll-mt-24">
             <div className="h-1.5 bg-[#2BA88C]" />
@@ -1447,12 +1419,46 @@ export default function Resultados() {
             </div>
           </section>
 
+          {/* Como estudas melhor */}
+          <section id="sec9-estudo" data-idx-label="Como estudas melhor" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+            <div className="flex items-center gap-3 mb-2">
+              <Calculator style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
+              <h2 className="text-2xl font-bold text-[#F1F5F9]">Como estudas melhor</h2>
+            </div>
+            <p className="text-sm text-[#94A3B8] mb-6">
+              Cada pessoa aprende à sua maneira. Estas são as tuas formas mais fortes de aprender e algumas ideias para as usares a teu favor.
+            </p>
+            <div className="divide-y divide-[#334155]">
+              {Object.entries(result.intel_scores ?? {})
+                .sort((a, b) => Number(b[1]) - Number(a[1]))
+                .slice(0, 3)
+                .map(([cod]) => {
+                  const info = ESTUDO_POR_INTEL[cod];
+                  const Icon = INTEL_ICONS[cod] ?? BookOpen;
+                  if (!info) return null;
+                  return (
+                    <div key={cod} className="py-5 first:pt-0 last:pb-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Icon style={{ width: 22, height: 22, color: "#2BA88C", flexShrink: 0 }} />
+                        <h3 className="text-lg font-bold text-[#F1F5F9]">{INTEL_NAMES[cod] ?? cod}</h3>
+                      </div>
+                      <p className="text-sm text-[#F1F5F9] mb-2">{info.como}</p>
+                      <ul className="space-y-1 mb-2">
+                        {info.dicas.map((d, i) => (
+                          <li key={i} className="text-sm text-[#94A3B8]">· {d}</li>
+                        ))}
+                      </ul>
+                      <p className="text-xs text-[#94A3B8] italic">{info.livres}</p>
+                    </div>
+                  );
+                })}
+            </div>
+          </section>
+
           <p className="text-xs text-[#94A3B8] leading-relaxed">
             Estas áreas resultam do cruzamento entre as profissões com mais afinidade
             contigo e as provas de ingresso e disciplinas que lhes dão acesso no Secundário.
           </p>
-
-          {secaoPersonalidade(true)}
         </main>
           </div>
         </div>
