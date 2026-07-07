@@ -1131,74 +1131,6 @@ export default function Resultados() {
             </p>
           </section>
 
-          {/* Radar (teia) das áreas CCH */}
-          <section className="bg-[#1E293B] rounded-xl p-8">
-            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1 flex flex-col gap-6">
-                <div className="rounded-lg p-6" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
-                  <h3 className="text-base font-bold text-[#F1F5F9] mb-3 uppercase tracking-wide">
-                    As tuas áreas
-                  </h3>
-                  <p className="text-sm text-[#94A3B8] leading-relaxed">
-                    Quanto mais longe do centro, maior a afinidade da área com o teu
-                    perfil. Em baixo vês cada área em detalhe: as disciplinas que a
-                    definem, os cursos a que dá acesso e as profissões mais próximas.
-                  </p>
-                </div>
-                <div className="rounded-lg p-6" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
-                  <h4 className="text-xs uppercase tracking-wider text-[#2BA88C] font-semibold mb-4">
-                    Ordenadas por afinidade
-                  </h4>
-                  <div className="space-y-2">
-                    {ordered.map(([code, score]) => (
-                      <div
-                        key={code}
-                        className="bg-[#0F172A] border border-[#334155] rounded-lg p-3 flex items-center gap-3"
-                      >
-                        <BookOpenCheck className="w-5 h-5 text-[#94A3B8] shrink-0" />
-                        <span className="text-sm text-[#F1F5F9] leading-tight flex-1 min-w-0">
-                          {CCH_AREAS[code]?.nome ?? code}
-                        </span>
-                        <span className="text-base text-[#2BA88C] font-bold tabular-nums shrink-0">
-                          {score}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="hidden lg:block lg:col-span-2">
-                <ResponsiveContainer width="100%" height={460}>
-                  <RadarChart data={radarData} outerRadius="70%" margin={{ top: 60, right: 100, bottom: 60, left: 100 }}>
-                    <PolarGrid stroke="#334155" />
-                    <PolarAngleAxis dataKey="area" tick={renderCchTick as any} />
-                    <PolarRadiusAxis angle={90} domain={[0, 115]} tick={false} axisLine={false} />
-                    <Radar
-                      name="Afinidade"
-                      dataKey="value"
-                      stroke="#2BA88C"
-                      strokeWidth={2}
-                      fill="rgba(43, 168, 140, 0.35)"
-                      dot={{ r: 4, fill: "#2BA88C", stroke: "#0F172A", strokeWidth: 2 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0F172A",
-                        border: "1px solid #334155",
-                        borderRadius: "8px",
-                        fontSize: 12,
-                        color: "#F1F5F9",
-                      }}
-                      formatter={(value: number, _n: string, props: any) => [`${value}%`, props.payload?.area ?? "Área"]}
-                      labelFormatter={() => ""}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </section>
-
           {/* Interesses (RIASEC) */}
           <section id="sec9-interesses" data-idx-label="Interesses" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
             <div className="flex items-center gap-3 mb-2">
@@ -1251,6 +1183,70 @@ export default function Resultados() {
               );
             })()}
           </section>
+
+          {/* Radar (teia) das áreas CCH */}
+          <section className="bg-[#1E293B] rounded-xl p-8">
+            <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-1 flex flex-col gap-6">
+                <div className="rounded-lg p-6" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
+                  <h3 className="text-base font-bold text-[#F1F5F9] mb-3 uppercase tracking-wide">
+                    As tuas áreas
+                  </h3>
+                  <p className="text-sm text-[#94A3B8] leading-relaxed">
+                    Estas são as quatro áreas do Secundário, pela ordem que mais combina
+                    contigo. Em baixo vês cada uma em detalhe: as disciplinas que a definem.
+                  </p>
+                </div>
+                <div className="rounded-lg p-6" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
+                  <div className="space-y-2">
+                    {ordered.map(([code], i) => (
+                      <div
+                        key={code}
+                        className="bg-[#0F172A] border border-[#334155] rounded-lg p-3 flex items-center gap-3"
+                      >
+                        <span className="text-base font-bold tabular-nums shrink-0" style={{ color: i === 0 ? "#2BA88C" : "#94A3B8" }}>
+                          #{i + 1}
+                        </span>
+                        <span className="text-sm text-[#F1F5F9] leading-tight flex-1 min-w-0">
+                          {CCH_AREAS[code]?.nome ?? code}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="hidden lg:block lg:col-span-2">
+                <ResponsiveContainer width="100%" height={460}>
+                  <RadarChart data={radarData} outerRadius="70%" margin={{ top: 60, right: 100, bottom: 60, left: 100 }}>
+                    <PolarGrid stroke="#334155" />
+                    <PolarAngleAxis dataKey="area" tick={renderCchTick as any} />
+                    <PolarRadiusAxis angle={90} domain={[0, 115]} tick={false} axisLine={false} />
+                    <Radar
+                      name="Afinidade"
+                      dataKey="value"
+                      stroke="#2BA88C"
+                      strokeWidth={2}
+                      fill="rgba(43, 168, 140, 0.35)"
+                      dot={{ r: 4, fill: "#2BA88C", stroke: "#0F172A", strokeWidth: 2 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#0F172A",
+                        border: "1px solid #334155",
+                        borderRadius: "8px",
+                        fontSize: 12,
+                        color: "#F1F5F9",
+                      }}
+                      formatter={(value: number, _n: string, props: any) => [`${value}%`, props.payload?.area ?? "Área"]}
+                      labelFormatter={() => ""}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </section>
+
 
           {/* Detalhe por área */}
           <section id="sec9-areas" data-idx-label="Áreas" className="space-y-6 scroll-mt-24">
@@ -1339,7 +1335,7 @@ export default function Resultados() {
                 }
               });
             });
-            const profs = [...mapProf.values()].sort((a, b) => b.match - a.match);
+            const profs = [...mapProf.values()].sort((a, b) => b.match - a.match).slice(0, 5);
             if (profs.length === 0) return null;
             const maxMatch = profs[0].match || 1;
             return (
