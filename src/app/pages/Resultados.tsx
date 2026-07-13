@@ -302,6 +302,8 @@ export default function Resultados() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [riasecDescriptions, setRiasecDescriptions] = useState<Record<string, string>>({});
+  const [profVista, setProfVista] = useState<"profissional" | "secundario">("profissional");
+  const [profCursoSel, setProfCursoSel] = useState<{ area: string; curso: string } | null>(null);
   const [intelDescriptions, setIntelDescriptions] = useState<Record<string, string>>({});
   const [orientadorText, setOrientadorText] = useState<string>("");
   const [loadingOrientador, setLoadingOrientador] = useState(false);
@@ -1061,6 +1063,12 @@ export default function Resultados() {
     const ordered = Object.entries(cchScores).sort((a, b) => b[1] - a[1]);
     const detailed = result.cch_detailed ?? {};
 
+    // Via ensino profissional (só 9.º ano, quando o perfil o sinaliza)
+    const viaProfissional = !!result.prof_via_profissional;
+    const profAreas: Array<{ cod: string; nome: string }> = Array.isArray(result.prof_areas) ? result.prof_areas : [];
+    const profDetailed: Record<string, { nome: string; cursos: Array<{ nome: string; profissoes: string[] }> }> =
+      result.prof_detailed ?? {};
+
     // Dados do radar (teia) — 4 áreas CCH em ordem fixa (estável)
     const CCH_ORDER = ["CT", "CSE", "LH", "AV"];
     const radarData = CCH_ORDER.filter((code) => code in cchScores).map((code) => ({
@@ -1131,6 +1139,120 @@ export default function Resultados() {
             </p>
           </section>
 
+          {/* Via ensino profissional — só quando o perfil o sinaliza */}
+          {viaProfissional && (
+            <>
+              {/* Disclaimer + alternância de vista */}
+              <section className="rounded-2xl bg-[#1E293B] border border-[#2BA88C] p-6 space-y-4">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-[#2BA88C] font-medium mb-2">
+                    Também podes seguir por aqui
+                  </p>
+                  <p className="text-[#F1F5F9] leading-relaxed">
+                    Além das áreas do Secundário, há uma via que pode encaixar contigo: o{" "}
+                    <span className="font-semibold">ensino profissional</span>. É mais prático e ligado
+                    a uma profissão, tem estágio e também te dá o 12.º ano. Vê as duas hipóteses e
+                    compara.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setProfVista("profissional")}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    style={{
+                      backgroundColor: profVista === "profissional" ? "#2BA88C" : "#0F172A",
+                      color: profVista === "profissional" ? "#0F172A" : "#94A3B8",
+                      border: "1px solid " + (profVista === "profissional" ? "#2BA88C" : "#334155"),
+                    }}
+                  >
+                    Ensino profissional
+                  </button>
+                  <button
+                    onClick={() => setProfVista("secundario")}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    style={{
+                      backgroundColor: profVista === "secundario" ? "#2BA88C" : "#0F172A",
+                      color: profVista === "secundario" ? "#0F172A" : "#94A3B8",
+                      border: "1px solid " + (profVista === "secundario" ? "#2BA88C" : "#334155"),
+                    }}
+                  >
+                    Secundário regular
+                  </button>
+                </div>
+              </section>
+
+              {/* Áreas do profissional (só na vista "profissional") */}
+              {profVista === "profissional" && (
+                <section className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+                  <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">Áreas no ensino profissional</h2>
+                  <p className="text-sm text-[#94A3B8] mb-6">
+                    Pela ordem que mais combina contigo. Em cada uma, alguns cursos práticos — toca num
+                    para veres as profissões a que leva.
+                  </p>
+                  <div className="space-y-4">
+                    {profAreas.map((area, i) => {
+                      const det = profDetailed[area.cod];
+                      const cursos = det?.cursos ?? [];
+                      return (
+                        <div key={area.cod} className="rounded-xl border border-[#334155] bg-[#0F172A] p-5">
+                          <div className="flex items-center gap-3 mb-4">
+                            <span className="text-[#2BA88C] text-lg font-bold">#{i + 1}</span>
+                            <span className="text-[#F1F5F9] text-lg font-bold">{area.nome}</span>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            {cursos.map((c, j) => {
+                              const aberto = profCursoSel?.area === area.cod && profCursoSel?.curso === c.nome;
+                              return (
+                                <div key={j}>
+                                  <button
+                                    onClick={() =>
+                                      setProfCursoSel(aberto ? null : { area: area.cod, curso: c.nome })
+                                    }
+                                    className="w-full flex items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors"
+                                    style={{
+                                      backgroundColor: aberto ? "#1E293B" : "#0F172A",
+                                      borderColor: aberto ? "#2BA88C" : "#334155",
+                                    }}
+                                  >
+                                    <span className="text-sm text-[#F1F5F9]">{c.nome}</span>
+                                    <span className="text-[#2BA88C] text-lg leading-none">{aberto ? "−" : "+"}</span>
+                                  </button>
+                                  {aberto && (
+                                    <div className="mt-2 mb-1 px-4 py-3 rounded-lg bg-[#1E293B] border border-[#334155]">
+                                      <p className="text-xs uppercase tracking-wide text-[#94A3B8] mb-2">
+                                        Profissões a que leva
+                                      </p>
+                                      {c.profissoes.length > 0 ? (
+                                        <div className="flex flex-col gap-1">
+                                          {c.profissoes.map((p, k) => (
+                                            <span key={k} className="text-sm text-[#F1F5F9]">· {p}</span>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <span className="text-sm text-[#64748B]">Sem profissões associadas.</span>
+                                      )}
+                                      <p className="text-xs text-[#64748B] mt-3">Nível 4 · ensino profissional</p>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {cursos.length === 0 && (
+                              <span className="text-sm text-[#64748B]">Sem cursos nesta área.</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+            </>
+          )}
+
+          {/* Secções do Secundário — escondidas enquanto a vista profissional está ativa */}
+          {!(viaProfissional && profVista === "profissional") && (
+          <>
           {/* Personalidade */}
           {secaoPersonalidade(true)}
 
@@ -1521,6 +1643,8 @@ export default function Resultados() {
             Estas áreas foram escolhidas cruzando o que combina contigo com as
             disciplinas que abrem caminho a cada uma no Secundário.
           </p>
+          </>
+          )}
         </main>
           </div>
         </div>
