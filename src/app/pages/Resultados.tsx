@@ -1123,19 +1123,60 @@ export default function Resultados() {
         {renderIndiceMobile()}
         <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
           {/* Hero */}
-          <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-8 space-y-2">
+          <section className="rounded-2xl bg-[#1E293B] border border-[#334155] p-8 space-y-4">
             <p className="text-xs uppercase tracking-widest text-[#2BA88C] font-medium">
               O teu próximo passo
             </p>
-            <h1 className="text-3xl font-bold tracking-tight text-[#F1F5F9]">
-              {CCH_AREAS[ordered[0][0]]?.nome ?? ordered[0][0]}
-            </h1>
-            <p className="text-[#94A3B8] leading-relaxed pt-1">
-              Estás no 9.º ano e a tua próxima escolha é a área do Secundário. Com base
-              no que gostas e na forma como aprendes, estas são as quatro áreas dos Cursos
-              Científico-Humanísticos pela ordem que mais combina contigo. Não é
-              uma decisão fechada — é um ponto de partida para explorares.
-            </p>
+            {viaProfissional ? (
+              <>
+                <p className="text-[#94A3B8] leading-relaxed">
+                  Estás no 9.º ano e vais escolher o teu caminho no Secundário. Há duas vias
+                  possíveis, ambas te dão o 12.º ano. Com base no que gostas e na forma como
+                  aprendes, mostramos-te as duas.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-[#334155] bg-[#0F172A] p-4">
+                    <p className="text-[10px] uppercase tracking-wide text-[#2BA88C] mb-1">Via 1</p>
+                    <p className="text-[#F1F5F9] font-bold mb-1">Científico-Humanístico</p>
+                    <p className="text-xs text-[#94A3B8] leading-relaxed">
+                      Mais teórico, virado para a universidade. Quatro áreas, a que mais combina
+                      contigo é {CCH_AREAS[ordered[0][0]]?.nome ?? ordered[0][0]}.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-[#334155] bg-[#0F172A] p-4">
+                    <p className="text-[10px] uppercase tracking-wide text-[#2BA88C] mb-1">Via 2</p>
+                    <p className="text-[#F1F5F9] font-bold mb-1">Ensino profissional</p>
+                    <p className="text-xs text-[#94A3B8] leading-relaxed">
+                      Mais prático, ligado a uma profissão, com estágio. Também podes seguir para o
+                      superior depois.
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-[#2BA88C] bg-[#2BA88C]/[0.08] p-3">
+                  <p className="text-sm text-[#F1F5F9] leading-relaxed">
+                    O ensino profissional foi indicado por também estar associado a teu perfil, por
+                    ser mais prático e ligado a uma profissão.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-[#94A3B8] leading-relaxed">
+                  Estás no 9.º ano e a tua próxima escolha é a área do Secundário. Com base
+                  no que gostas e na forma como aprendes, estas são as quatro áreas dos Cursos
+                  Científico-Humanísticos pela ordem que mais combina contigo. Não é uma
+                  decisão fechada, é um ponto de partida para explorares.
+                </p>
+                <div className="rounded-xl border border-[#334155] bg-[#0F172A] p-4">
+                  <p className="text-[10px] uppercase tracking-wide text-[#2BA88C] mb-1">
+                    A que mais combina contigo
+                  </p>
+                  <p className="text-[#F1F5F9] text-lg font-bold">
+                    {CCH_AREAS[ordered[0][0]]?.nome ?? ordered[0][0]}
+                  </p>
+                </div>
+              </>
+            )}
           </section>
 
           {/* Personalidade */}
