@@ -274,6 +274,7 @@ const PERS_DESCRICOES: Record<string, Record<string, string>> = {
 
 interface OccDetail {
   prof: string;
+  nameProfissao: string;
   mymentor: string | null;
   cnaef_unico: string | null;
   isco_4dig: string | null;
@@ -317,7 +318,8 @@ export default function Resultados() {
   const [activeSection, setActiveSection] = useState<string>("");
   const [menuHeaderAberto, setMenuHeaderAberto] = useState(false);
   const [seccoesAberto, setSeccoesAberto] = useState(false);
-  const [profSel9, setProfSel9] = useState<{ prof: string; area: string; mymentor: string | null; cursos: { nome: string }[] } | null>(null);
+  const [profSel9, setProfSel9] = useState<{ mae: string; area: string; mymentor: string | null; filhas: { esco: string; prof: string; match: number; mymentor: string | null; cursos: { nome: string }[] }[] } | null>(null);
+  const [profFilhaSel, setProfFilhaSel] = useState<string | null>(null);
 
   useEffect(() => {
     loadResults();
@@ -521,7 +523,7 @@ export default function Resultados() {
       if (top200Escos.length > 0) {
         const { data: occData, error: occError } = await supabase
           .from("occupations")
-          .select("esco, prof, mymentor, cnaef_unico, isco_4dig")
+          .select("esco, prof, mymentor, cnaef_unico, isco_4dig, name_profissao")
           .in("esco", top200Escos);
 
         if (occError) {
@@ -530,11 +532,14 @@ export default function Resultados() {
           const nameMap: Record<string, string> = {};
           const mmMap: Record<string, string | null> = {};
           const detailMap: Record<string, OccDetail> = {};
-          (occData as (OccupationRow & { mymentor?: string | null; cnaef_unico?: string | null; isco_4dig?: string | null })[]).forEach((o) => {
+          (occData as (OccupationRow & { mymentor?: string | null; cnaef_unico?: string | null; isco_4dig?: string | null; name_profissao?: string | null })[]).forEach((o) => {
             nameMap[o.esco] = o.prof;
             mmMap[o.esco] = o.mymentor ?? null;
             detailMap[o.esco] = {
               prof: o.prof,
+              // Nome "mãe" a mostrar ao aluno. Se não houver (profissão retirada ou
+              // fora do mapa), usa o nome original como recurso. Não afeta o cálculo.
+              nameProfissao: (o.name_profissao && o.name_profissao.trim()) ? o.name_profissao.trim() : o.prof,
               mymentor: o.mymentor ?? null,
               cnaef_unico: o.cnaef_unico ?? null,
               isco_4dig: o.isco_4dig ?? null,
@@ -1517,6 +1522,7 @@ export default function Resultados() {
           {/* Profissões sugeridas (cartões, fora das áreas) */}
           {(() => {
             const detalhe = result.cch_detailed ?? {};
+            // 1. Reunir cada profissão (por esco) com a sua melhor afinidade e área.
             const mapProf = new Map<string, { esco: string; prof: string; mymentor: string | null; match: number; area: string; cursos: { nome: string }[] }>();
             ordered.forEach(([code]) => {
               const det = detalhe[code];
@@ -1529,9 +1535,32 @@ export default function Resultados() {
                 }
               });
             });
-            const profs = [...mapProf.values()].sort((a, b) => b.match - a.match).slice(0, 5);
-            if (profs.length === 0) return null;
-            const maxMatch = profs[0].match || 1;
+            // 2. Agrupar pela mãe (name_profissao). As profissões sem mãe (retiradas)
+            //    são saltadas. O cálculo não muda; isto é só apresentação.
+            const maes = new Map<string, {
+              mae: string; match: number; area: string; mymentor: string | null;
+              filhas: { esco: string; prof: string; match: number; mymentor: string | null; cursos: { nome: string }[] }[];
+            }>();
+            for (const p of mapProf.values()) {
+              const det = occDetailMap[p.esco];
+              const mae = det?.nameProfissao;
+              if (!mae) continue; // sem mãe = profissão retirada, não se mostra
+              const g = maes.get(mae);
+              const filha = { esco: p.esco, prof: p.prof, match: p.match, mymentor: p.mymentor, cursos: p.cursos };
+              if (!g) {
+                maes.set(mae, { mae, match: p.match, area: p.area, mymentor: p.mymentor, filhas: [filha] });
+              } else {
+                g.filhas.push(filha);
+                if (p.match > g.match) { g.match = p.match; g.area = p.area; g.mymentor = p.mymentor; }
+              }
+            }
+            // 3. Ordenar mães por afinidade, mostrar as 5 primeiras; filhas ordenadas.
+            const grupos = [...maes.values()]
+              .map((g) => ({ ...g, filhas: g.filhas.sort((a, b) => b.match - a.match).slice(0, 3) }))
+              .sort((a, b) => b.match - a.match)
+              .slice(0, 5);
+            if (grupos.length === 0) return null;
+            const maxMatch = grupos[0].match || 1;
             return (
               <section id="sec9-profissoes" data-idx-label="Profissões" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
                 <div className="flex items-center gap-3 mb-2">
@@ -1542,21 +1571,21 @@ export default function Resultados() {
                   Uma seleção de caminhos que combinam contigo. Toca numa para saber como se lá chega e onde estudar.
                 </p>
                 <div className="flex flex-col gap-3">
-                  {profs.map((p) => {
-                    const rel = p.match / maxMatch;
+                  {grupos.map((g) => {
+                    const rel = g.match / maxMatch;
                     const dot = rel >= 0.8 ? 11 : rel >= 0.55 ? 9 : 7;
                     const op = rel >= 0.8 ? 1 : rel >= 0.55 ? 0.75 : 0.5;
                     return (
                       <button
-                        key={p.esco}
-                        onClick={() => setProfSel9({ prof: p.prof, area: p.area, mymentor: p.mymentor, cursos: p.cursos })}
+                        key={g.mae}
+                        onClick={() => setProfSel9({ mae: g.mae, area: g.area, mymentor: g.mymentor, filhas: g.filhas })}
                         className="flex items-center gap-3 bg-[#0F172A] border border-[#334155] hover:border-[#2BA88C] rounded-xl p-4 text-left transition-colors"
                       >
                         <span
                           className="rounded-full bg-[#2BA88C] shrink-0"
                           style={{ width: dot, height: dot, opacity: op }}
                         />
-                        <span className="text-sm text-[#F1F5F9] flex-1 min-w-0">{p.prof}</span>
+                        <span className="text-sm text-[#F1F5F9] flex-1 min-w-0">{g.mae}</span>
                         <ChevronRight style={{ width: 18, height: 18, color: "#2BA88C", flexShrink: 0 }} />
                       </button>
                     );
@@ -1655,53 +1684,95 @@ export default function Resultados() {
           </div>
         </div>
 
-        {/* Painel da profissão selecionada */}
-        {profSel9 && (
-          <div
-            className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 p-4"
-            onClick={() => setProfSel9(null)}
-          >
+        {/* Painel da profissão selecionada (mãe + filhas) */}
+        {profSel9 && (() => {
+          const filhas = profSel9.filhas;
+          const umaFilha = filhas.length === 1;
+          // Filha em detalhe: a selecionada, ou a única/primeira.
+          const filhaAtiva = umaFilha
+            ? filhas[0]
+            : (filhas.find((f) => f.esco === profFilhaSel) ?? null);
+          const fecha = () => { setProfSel9(null); setProfFilhaSel(null); };
+          return (
             <div
-              className="bg-[#1E293B] border border-[#334155] rounded-2xl p-6 w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 p-4"
+              onClick={fecha}
             >
-              <div className="flex items-start justify-between gap-3 mb-4">
-                <h3 className="text-lg font-bold text-[#F1F5F9]">{profSel9.prof}</h3>
-                <button
-                  onClick={() => setProfSel9(null)}
-                  aria-label="Fechar"
-                  className="text-[#94A3B8] text-xl leading-none shrink-0"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="bg-[#0F172A] border border-[#334155] rounded-lg p-3 mb-4">
-                <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-1">Chega-se por aqui</p>
-                <p className="text-sm text-[#F1F5F9]">{profSel9.area}</p>
-              </div>
-              {profSel9.cursos.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-2">Formações sugeridas</p>
-                  <div className="space-y-1">
-                    {profSel9.cursos.slice(0, 5).map((c, i) => (
-                      <p key={i} className="text-sm text-[#F1F5F9]">· {c.nome}</p>
-                    ))}
-                  </div>
+              <div
+                className="bg-[#1E293B] border border-[#334155] rounded-2xl p-6 w-full max-w-md"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <h3 className="text-lg font-bold text-[#F1F5F9]">{profSel9.mae}</h3>
+                  <button onClick={fecha} aria-label="Fechar" className="text-[#94A3B8] text-xl leading-none shrink-0">✕</button>
                 </div>
-              )}
-              {buildMymentorUrl(profSel9.mymentor) && (
-                <a
-                  href={buildMymentorUrl(profSel9.mymentor)!}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-[#2BA88C] bg-[rgba(43,168,140,0.1)] border border-[#2BA88C] rounded-lg py-3 text-sm font-medium hover:bg-[rgba(43,168,140,0.18)] transition-colors"
-                >
-                  <ExternalLink style={{ width: 16, height: 16 }} /> Ver no MyMentor
-                </a>
-              )}
+
+                {/* Se a mãe agrupa várias profissões, mostrar as filhas para escolher */}
+                {!umaFilha && (
+                  <div className="mb-4">
+                    <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-2">
+                      As que mais combinam contigo
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {filhas.map((f) => {
+                        const aberta = f.esco === filhaAtiva?.esco;
+                        return (
+                          <button
+                            key={f.esco}
+                            onClick={() => setProfFilhaSel(aberta ? null : f.esco)}
+                            className="flex items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors"
+                            style={{
+                              backgroundColor: aberta ? "rgba(43,168,140,0.06)" : "#0F172A",
+                              borderColor: aberta ? "#2BA88C" : "#334155",
+                            }}
+                          >
+                            <span className="text-sm text-[#F1F5F9]">{f.prof}</span>
+                            <ChevronRight style={{ width: 16, height: 16, color: "#2BA88C" }} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Detalhe da filha ativa (chega-se por aqui + formações + MyMentor) */}
+                {filhaAtiva && (
+                  <>
+                    <div className="bg-[#0F172A] border border-[#334155] rounded-lg p-3 mb-4">
+                      <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-1">Chega-se por aqui</p>
+                      <p className="text-sm text-[#F1F5F9]">{profSel9.area}</p>
+                    </div>
+                    {filhaAtiva.cursos.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-2">Formações sugeridas</p>
+                        <div className="space-y-1">
+                          {filhaAtiva.cursos.slice(0, 5).map((c, i) => (
+                            <p key={i} className="text-sm text-[#F1F5F9]">· {c.nome}</p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {buildMymentorUrl(filhaAtiva.mymentor) && (
+                      <a
+                        href={buildMymentorUrl(filhaAtiva.mymentor)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 text-[#2BA88C] bg-[rgba(43,168,140,0.1)] border border-[#2BA88C] rounded-lg py-3 text-sm font-medium hover:bg-[rgba(43,168,140,0.18)] transition-colors"
+                      >
+                        <ExternalLink style={{ width: 16, height: 16 }} /> Ver no MyMentor
+                      </a>
+                    )}
+                  </>
+                )}
+
+                {/* Mãe com várias filhas mas nenhuma escolhida ainda */}
+                {!umaFilha && !filhaAtiva && (
+                  <p className="text-sm text-[#64748B]">Escolhe uma das profissões acima para veres como se lá chega.</p>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     );
   }
