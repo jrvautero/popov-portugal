@@ -537,9 +537,9 @@ export default function Resultados() {
             mmMap[o.esco] = o.mymentor ?? null;
             detailMap[o.esco] = {
               prof: o.prof,
-              // Nome "mãe" a mostrar ao aluno. Se não houver (profissão retirada ou
-              // fora do mapa), usa o nome original como recurso. Não afeta o cálculo.
-              nameProfissao: (o.name_profissao && o.name_profissao.trim()) ? o.name_profissao.trim() : o.prof,
+              // Nome a mostrar ao aluno, vindo da base. Se estiver vazio, a profissão
+              // foi marcada para retirar e não se mostra. Não afeta o cálculo.
+              nameProfissao: (o.name_profissao && o.name_profissao.trim()) ? o.name_profissao.trim() : "",
               mymentor: o.mymentor ?? null,
               cnaef_unico: o.cnaef_unico ?? null,
               isco_4dig: o.isco_4dig ?? null,
