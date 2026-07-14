@@ -97,6 +97,9 @@ export default function AdminImport() {
           const cnaef_unico = row.cnaef_unico?.toString().trim() || null;
           const description = row.description?.toString().trim() || null;
           const qnqs = row.qnqs?.toString().trim() || null;
+          // Nome "mãe" mostrado ao aluno e família ISCO (só apresentação, não afeta o cálculo).
+          const name_profissao = row.name_profissao?.toString().trim() || null;
+          const familia = row.familia?.toString().trim() || null;
           const riasec_r = parseFloat(row.riasec_r) || null;
           const riasec_i = parseFloat(row.riasec_i) || null;
           const riasec_a = parseFloat(row.riasec_a) || null;
@@ -112,7 +115,7 @@ export default function AdminImport() {
           // Upsert occupation
           const { error: occError } = await supabase
             .from('occupations')
-            .upsert({ esco, isco_4dig, prof, mymentor, onet, cnaef_unico, description, qnqs, riasec_r, riasec_i, riasec_a, riasec_s, riasec_e, riasec_c }, { onConflict: 'esco' });
+            .upsert({ esco, isco_4dig, prof, mymentor, onet, cnaef_unico, description, qnqs, name_profissao, familia, riasec_r, riasec_i, riasec_a, riasec_s, riasec_e, riasec_c }, { onConflict: 'esco' });
 
           if (occError) {
             addProfLog(`⚠ Linha ${i + 1} falhou ao inserir profissão: ${occError.message}`);
