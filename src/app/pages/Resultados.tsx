@@ -564,6 +564,13 @@ export default function Resultados() {
             .map(([c]) => c);
 
           const iscoSet = new Set<string>();
+          // Profissões sugeridas no 9.º ano: precisam das formações do próprio ISCO.
+          for (const det9 of Object.values(data.cch_detailed ?? {}) as Array<{ profissoes?: { esco: string }[] }>) {
+            for (const p of det9?.profissoes ?? []) {
+              const isco = detailMap[p.esco]?.isco_4dig;
+              if (isco) iscoSet.add(isco);
+            }
+          }
           for (const c of top3Cods) {
             const n1 = parseInt(c, 10);
             Object.values(detailMap)
@@ -1527,10 +1534,13 @@ export default function Resultados() {
             ordered.forEach(([code]) => {
               const det = detalhe[code];
               const areaNome = CCH_AREAS[code]?.nome ?? code;
-              const cursos = (det?.cursos ?? []).map((c) => ({ nome: c.nome }));
               (det?.profissoes ?? []).forEach((p) => {
                 const ex = mapProf.get(p.esco);
                 if (!ex || p.match > ex.match) {
+                  // Formações da própria profissão, pelo ISCO dela (a filha real),
+                  // e não as da área, que serviam para todas por igual.
+                  const isco = occDetailMap[p.esco]?.isco_4dig ?? null;
+                  const cursos = (isco ? (trainingsByIsco[isco] ?? []) : []).map((c) => ({ nome: c.name }));
                   mapProf.set(p.esco, { esco: p.esco, prof: p.prof, mymentor: p.mymentor, match: p.match, area: areaNome, cursos });
                 }
               });
@@ -1555,8 +1565,14 @@ export default function Resultados() {
               }
             }
             // 3. Ordenar mães por afinidade, mostrar as 5 primeiras; filhas ordenadas.
+            //    Se para esta pessoa a mãe só tem uma filha, o nome de grupo não serve
+            //    de nada: mostra-se o nome da própria profissão.
             const grupos = [...maes.values()]
-              .map((g) => ({ ...g, filhas: g.filhas.sort((a, b) => b.match - a.match).slice(0, 3) }))
+              .map((g) => {
+                const filhas = g.filhas.sort((a, b) => b.match - a.match).slice(0, 3);
+                const nome = filhas.length === 1 ? filhas[0].prof : g.mae;
+                return { ...g, mae: nome, filhas };
+              })
               .sort((a, b) => b.match - a.match)
               .slice(0, 5);
             if (grupos.length === 0) return null;
