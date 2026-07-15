@@ -1540,7 +1540,14 @@ export default function Resultados() {
                   // Formações da própria profissão, pelo ISCO dela (a filha real),
                   // e não as da área, que serviam para todas por igual.
                   const isco = occDetailMap[p.esco]?.isco_4dig ?? null;
-                  const cursos = (isco ? (trainingsByIsco[isco] ?? []) : []).map((c) => ({ nome: c.name }));
+                  // Uma formação pode existir em licenciatura e em mestrado com o
+                  // mesmo nome. Mostra-se uma vez só.
+                  const vistos = new Set<string>();
+                  const cursos: { nome: string }[] = [];
+                  for (const c of (isco ? (trainingsByIsco[isco] ?? []) : [])) {
+                    const nome = c.name.trim();
+                    if (nome && !vistos.has(nome)) { vistos.add(nome); cursos.push({ nome }); }
+                  }
                   mapProf.set(p.esco, { esco: p.esco, prof: p.prof, mymentor: p.mymentor, match: p.match, area: areaNome, cursos });
                 }
               });
@@ -1719,15 +1726,27 @@ export default function Resultados() {
                   <button onClick={fecha} aria-label="Fechar" className="text-[#94A3B8] text-xl leading-none shrink-0">✕</button>
                 </div>
 
-                {/* Se a mãe agrupa várias profissões, mostrar as filhas para escolher */}
+                {/* Se o nome mostrado agrupa, dizer qual é a profissão real */}
                 {!umaFilha && (
                   <div className="mb-4">
                     <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-2">
-                      As que mais combinam contigo
+                      {filhas.length === 1 ? "A que mais combina contigo" : "As que mais combinam contigo"}
                     </p>
                     <div className="flex flex-col gap-2">
                       {filhas.map((f) => {
                         const aberta = f.esco === filhaAtiva?.esco;
+                        const unica = filhas.length === 1;
+                        if (unica) {
+                          return (
+                            <div
+                              key={f.esco}
+                              className="rounded-lg border px-4 py-3"
+                              style={{ backgroundColor: "rgba(43,168,140,0.06)", borderColor: "#2BA88C" }}
+                            >
+                              <span className="text-sm text-[#F1F5F9]">{f.prof}</span>
+                            </div>
+                          );
+                        }
                         return (
                           <button
                             key={f.esco}
