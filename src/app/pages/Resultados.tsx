@@ -318,8 +318,7 @@ export default function Resultados() {
   const [activeSection, setActiveSection] = useState<string>("");
   const [menuHeaderAberto, setMenuHeaderAberto] = useState(false);
   const [seccoesAberto, setSeccoesAberto] = useState(false);
-  const [profSel9, setProfSel9] = useState<{ mae: string; area: string; mymentor: string | null; filhas: { esco: string; prof: string; match: number; mymentor: string | null; cursos: { nome: string }[] }[] } | null>(null);
-  const [profFilhaSel, setProfFilhaSel] = useState<string | null>(null);
+  const [profSel9, setProfSel9] = useState<{ mae: string; area: string; filhas: { esco: string; prof: string; mymentor: string | null; cursos: { nome: string }[] }[] } | null>(null);
 
   useEffect(() => {
     loadResults();
@@ -1529,49 +1528,54 @@ export default function Resultados() {
           {/* Profissões sugeridas (cartões, fora das áreas) */}
           {(() => {
             const detalhe = result.cch_detailed ?? {};
-            // 1. Reunir cada profissão (por esco) com a sua melhor afinidade e área.
-            const mapProf = new Map<string, { esco: string; prof: string; mymentor: string | null; match: number; area: string; cursos: { nome: string }[] }>();
+            // 1. Reunir cada profissão sugerida com a sua melhor afinidade e área.
+            const mapProf = new Map<string, { esco: string; match: number; area: string }>();
             ordered.forEach(([code]) => {
               const det = detalhe[code];
               const areaNome = CCH_AREAS[code]?.nome ?? code;
               (det?.profissoes ?? []).forEach((p) => {
                 const ex = mapProf.get(p.esco);
                 if (!ex || p.match > ex.match) {
-                  // Formações da própria profissão, pelo ISCO dela (a filha real),
-                  // e não as da área, que serviam para todas por igual.
-                  const isco = occDetailMap[p.esco]?.isco_4dig ?? null;
-                  // Uma formação pode existir em licenciatura e em mestrado com o
-                  // mesmo nome. Mostra-se uma vez só.
-                  const vistos = new Set<string>();
-                  const cursos: { nome: string }[] = [];
-                  for (const c of (isco ? (trainingsByIsco[isco] ?? []) : [])) {
-                    const nome = c.name.trim();
-                    if (nome && !vistos.has(nome)) { vistos.add(nome); cursos.push({ nome }); }
-                  }
-                  mapProf.set(p.esco, { esco: p.esco, prof: p.prof, mymentor: p.mymentor, match: p.match, area: areaNome, cursos });
+                  mapProf.set(p.esco, { esco: p.esco, match: p.match, area: areaNome });
                 }
               });
             });
-            // 2. Agrupar pela mãe (name_profissao). As profissões sem mãe (retiradas)
-            //    são saltadas. O cálculo não muda; isto é só apresentação.
+            // 2. Agrupar pelo nome mostrado. Sem nome = profissão retirada, não se mostra.
+            //    As profissões associadas são as que a pessoa tem nas sugestões, e cada
+            //    uma leva as formações do ISCO dela, sem repetir nomes.
+            const cursosDoIsco = (isco: string | null) => {
+              const vistos = new Set<string>();
+              const out: { nome: string }[] = [];
+              for (const c of (isco ? (trainingsByIsco[isco] ?? []) : [])) {
+                const nome = c.name.trim();
+                if (nome && !vistos.has(nome)) { vistos.add(nome); out.push({ nome }); }
+              }
+              return out;
+            };
             const maes = new Map<string, {
-              mae: string; match: number; area: string; mymentor: string | null;
-              filhas: { esco: string; prof: string; match: number; mymentor: string | null; cursos: { nome: string }[] }[];
+              mae: string; match: number; area: string;
+              filhas: { esco: string; prof: string; mymentor: string | null; match: number; cursos: { nome: string }[] }[];
             }>();
             for (const p of mapProf.values()) {
               const det = occDetailMap[p.esco];
               const mae = det?.nameProfissao;
-              if (!mae) continue; // sem mãe = profissão retirada, não se mostra
+              if (!mae) continue;
+              const filha = {
+                esco: p.esco,
+                prof: det.prof,
+                mymentor: det.mymentor,
+                match: p.match,
+                cursos: cursosDoIsco(det.isco_4dig ?? null),
+              };
               const g = maes.get(mae);
-              const filha = { esco: p.esco, prof: p.prof, match: p.match, mymentor: p.mymentor, cursos: p.cursos };
               if (!g) {
-                maes.set(mae, { mae, match: p.match, area: p.area, mymentor: p.mymentor, filhas: [filha] });
+                maes.set(mae, { mae, match: p.match, area: p.area, filhas: [filha] });
               } else {
                 g.filhas.push(filha);
-                if (p.match > g.match) { g.match = p.match; g.area = p.area; g.mymentor = p.mymentor; }
+                if (p.match > g.match) { g.match = p.match; g.area = p.area; }
               }
             }
-            // 3. Ordenar mães por afinidade, mostrar as 5 primeiras; filhas ordenadas.
+            // 3. Cinco nomes por afinidade; até três profissões associadas em cada.
             const grupos = [...maes.values()]
               .map((g) => ({ ...g, filhas: g.filhas.sort((a, b) => b.match - a.match).slice(0, 3) }))
               .sort((a, b) => b.match - a.match)
@@ -1595,7 +1599,7 @@ export default function Resultados() {
                     return (
                       <button
                         key={g.mae}
-                        onClick={() => setProfSel9({ mae: g.mae, area: g.area, mymentor: g.mymentor, filhas: g.filhas })}
+                        onClick={() => setProfSel9({ mae: g.mae, area: g.area, filhas: g.filhas })}
                         className="flex items-center gap-3 bg-[#0F172A] border border-[#334155] hover:border-[#2BA88C] rounded-xl p-4 text-left transition-colors"
                       >
                         <span
@@ -1701,24 +1705,18 @@ export default function Resultados() {
           </div>
         </div>
 
-        {/* Painel da profissão selecionada (mãe + filhas) */}
+        {/* Painel da profissão selecionada */}
         {profSel9 && (() => {
           const filhas = profSel9.filhas;
-          // Só se salta a lista de filhas quando o nome mostrado já é a própria
-          // profissão. Se for um nome que agrupa, o aluno tem de ver qual é.
-          const umaFilha = filhas.length === 1 && filhas[0].prof.trim() === profSel9.mae.trim();
-          // Filha em detalhe: a selecionada; se só houver uma, essa, já aberta.
-          const filhaAtiva = filhas.length === 1
-            ? filhas[0]
-            : (filhas.find((f) => f.esco === profFilhaSel) ?? null);
-          const fecha = () => { setProfSel9(null); setProfFilhaSel(null); };
+          const uma = filhas.length === 1;
+          const fecha = () => setProfSel9(null);
           return (
             <div
               className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 p-4"
               onClick={fecha}
             >
               <div
-                className="bg-[#1E293B] border border-[#334155] rounded-2xl p-6 w-full max-w-md"
+                className="bg-[#1E293B] border border-[#334155] rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-start justify-between gap-3 mb-4">
@@ -1726,66 +1724,26 @@ export default function Resultados() {
                   <button onClick={fecha} aria-label="Fechar" className="text-[#94A3B8] text-xl leading-none shrink-0">✕</button>
                 </div>
 
-                {/* Se o nome mostrado agrupa, dizer qual é a profissão real */}
-                {!umaFilha && (
-                  <div className="mb-4">
-                    <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-2">
-                      {filhas.length === 1 ? "A que mais combina contigo" : "As que mais combinam contigo"}
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      {filhas.map((f) => {
-                        const aberta = f.esco === filhaAtiva?.esco;
-                        const unica = filhas.length === 1;
-                        if (unica) {
-                          return (
-                            <div
-                              key={f.esco}
-                              className="rounded-lg border px-4 py-3"
-                              style={{ backgroundColor: "rgba(43,168,140,0.06)", borderColor: "#2BA88C" }}
-                            >
-                              <span className="text-sm text-[#F1F5F9]">{f.prof}</span>
-                            </div>
-                          );
-                        }
-                        return (
-                          <button
-                            key={f.esco}
-                            onClick={() => setProfFilhaSel(aberta ? null : f.esco)}
-                            className="flex items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors"
-                            style={{
-                              backgroundColor: aberta ? "rgba(43,168,140,0.06)" : "#0F172A",
-                              borderColor: aberta ? "#2BA88C" : "#334155",
-                            }}
-                          >
-                            <span className="text-sm text-[#F1F5F9]">{f.prof}</span>
-                            <ChevronRight style={{ width: 16, height: 16, color: "#2BA88C" }} />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                <div className="bg-[#0F172A] border border-[#334155] rounded-lg p-3 mb-4">
+                  <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-1">Chega-se aqui pela área</p>
+                  <p className="text-sm text-[#F1F5F9]">{profSel9.area}</p>
+                </div>
 
-                {/* Detalhe da filha ativa (chega-se por aqui + formações + MyMentor) */}
-                {filhaAtiva && (
+                {uma ? (
                   <>
-                    <div className="bg-[#0F172A] border border-[#334155] rounded-lg p-3 mb-4">
-                      <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-1">Chega-se por aqui</p>
-                      <p className="text-sm text-[#F1F5F9]">{profSel9.area}</p>
-                    </div>
-                    {filhaAtiva.cursos.length > 0 && (
+                    {filhas[0].cursos.length > 0 && (
                       <div className="mb-4">
                         <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-2">Formações sugeridas</p>
                         <div className="space-y-1">
-                          {filhaAtiva.cursos.slice(0, 5).map((c, i) => (
+                          {filhas[0].cursos.slice(0, 5).map((c, i) => (
                             <p key={i} className="text-sm text-[#F1F5F9]">· {c.nome}</p>
                           ))}
                         </div>
                       </div>
                     )}
-                    {buildMymentorUrl(filhaAtiva.mymentor) && (
+                    {buildMymentorUrl(filhas[0].mymentor) && (
                       <a
-                        href={buildMymentorUrl(filhaAtiva.mymentor)!}
+                        href={buildMymentorUrl(filhas[0].mymentor)!}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 text-[#2BA88C] bg-[rgba(43,168,140,0.1)] border border-[#2BA88C] rounded-lg py-3 text-sm font-medium hover:bg-[rgba(43,168,140,0.18)] transition-colors"
@@ -1794,11 +1752,42 @@ export default function Resultados() {
                       </a>
                     )}
                   </>
-                )}
-
-                {/* Mãe com várias filhas mas nenhuma escolhida ainda */}
-                {!umaFilha && !filhaAtiva && (
-                  <p className="text-sm text-[#64748B]">Escolhe uma das profissões acima para veres como se lá chega.</p>
+                ) : (
+                  <>
+                    <p className="text-xs uppercase tracking-wider text-[#94A3B8] mb-2">Profissões associadas</p>
+                    <div className="flex flex-col gap-3">
+                      {filhas.map((f) => {
+                        const url = buildMymentorUrl(f.mymentor);
+                        const cabeca = (
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-semibold text-[#2BA88C]">{f.prof}</span>
+                            {url && <ExternalLink style={{ width: 14, height: 14, color: "#2BA88C", flexShrink: 0 }} />}
+                          </span>
+                        );
+                        return (
+                          <div key={f.esco} className="rounded-xl border border-[#334155] p-4">
+                            {url ? (
+                              <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                                {cabeca}
+                              </a>
+                            ) : (
+                              cabeca
+                            )}
+                            {f.cursos.length > 0 && (
+                              <>
+                                <p className="text-[10px] uppercase tracking-wider text-[#64748B] mt-3 mb-1">Formações</p>
+                                <div className="space-y-1">
+                                  {f.cursos.slice(0, 5).map((c, i) => (
+                                    <p key={i} className="text-[13px] text-[#CBD5E1]">· {c.nome}</p>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
