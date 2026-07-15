@@ -1565,14 +1565,8 @@ export default function Resultados() {
               }
             }
             // 3. Ordenar mães por afinidade, mostrar as 5 primeiras; filhas ordenadas.
-            //    Se para esta pessoa a mãe só tem uma filha, o nome de grupo não serve
-            //    de nada: mostra-se o nome da própria profissão.
             const grupos = [...maes.values()]
-              .map((g) => {
-                const filhas = g.filhas.sort((a, b) => b.match - a.match).slice(0, 3);
-                const nome = filhas.length === 1 ? filhas[0].prof : g.mae;
-                return { ...g, mae: nome, filhas };
-              })
+              .map((g) => ({ ...g, filhas: g.filhas.sort((a, b) => b.match - a.match).slice(0, 3) }))
               .sort((a, b) => b.match - a.match)
               .slice(0, 5);
             if (grupos.length === 0) return null;
@@ -1703,9 +1697,11 @@ export default function Resultados() {
         {/* Painel da profissão selecionada (mãe + filhas) */}
         {profSel9 && (() => {
           const filhas = profSel9.filhas;
-          const umaFilha = filhas.length === 1;
-          // Filha em detalhe: a selecionada, ou a única/primeira.
-          const filhaAtiva = umaFilha
+          // Só se salta a lista de filhas quando o nome mostrado já é a própria
+          // profissão. Se for um nome que agrupa, o aluno tem de ver qual é.
+          const umaFilha = filhas.length === 1 && filhas[0].prof.trim() === profSel9.mae.trim();
+          // Filha em detalhe: a selecionada; se só houver uma, essa, já aberta.
+          const filhaAtiva = filhas.length === 1
             ? filhas[0]
             : (filhas.find((f) => f.esco === profFilhaSel) ?? null);
           const fecha = () => { setProfSel9(null); setProfFilhaSel(null); };
