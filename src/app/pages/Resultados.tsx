@@ -205,6 +205,7 @@ interface ResultData {
         disciplina: string;
         peso: number;
         match: number;
+        aptidao: number | null;
         intel_cod: number | null;
         intel_nome: string | null;
         intel_score: number;
@@ -1322,16 +1323,16 @@ export default function Resultados() {
                 </div>
                 <div className="rounded-lg p-6" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
                   <div className="space-y-2">
-                    {ordered.map(([code], i) => (
+                    {ordered.map(([code, sc]) => (
                       <div
                         key={code}
                         className="bg-[#0F172A] border border-[#334155] rounded-lg p-3 flex items-center gap-3"
                       >
-                        <span className="text-base font-bold tabular-nums shrink-0" style={{ color: i === 0 ? "#2BA88C" : "#94A3B8" }}>
-                          #{i + 1}
-                        </span>
                         <span className="text-sm text-[#F1F5F9] leading-tight flex-1 min-w-0">
                           {CCH_AREAS[code]?.nome ?? code}
+                        </span>
+                        <span className="text-sm font-bold tabular-nums shrink-0 text-[#2BA88C]">
+                          {sc}%
                         </span>
                       </div>
                     ))}
@@ -1373,32 +1374,28 @@ export default function Resultados() {
 
           {/* Detalhe por área */}
           <section id="sec9-areas" data-idx-label="Áreas" className="space-y-6 scroll-mt-24">
-            {ordered.map(([code, score], i) => {
+            {ordered.map(([code, score]) => {
               const meta = CCH_AREAS[code];
               const det = detailed[code];
               const disciplinas = (det?.disciplinas ?? [])
                 .slice()
                 .sort((a, b) => (b.match !== a.match ? b.match - a.match : b.peso - a.peso));
-              const isTop = i === 0;
               return (
                 <div
                   key={code}
                   className="rounded-xl overflow-hidden"
-                  style={{
-                    backgroundColor: isTop ? "rgba(43,168,140,0.08)" : "#1E293B",
-                    border: isTop ? "1px solid #2BA88C" : "1px solid #334155",
-                  }}
+                  style={{ backgroundColor: "#1E293B", border: "1px solid #334155" }}
                 >
                   <div className="p-6 lg:p-8">
-                    {/* Cabeçalho da área */}
+                    {/* Cabeçalho da área, com a percentagem, sem numeração */}
                     <div className="flex items-center gap-3 mb-3">
-                      <span className="text-2xl font-bold tabular-nums shrink-0" style={{ color: isTop ? "#2BA88C" : "#94A3B8" }}>
-                        #{i + 1}
-                      </span>
                       <BookOpenCheck style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
-                      <h2 className="text-xl font-bold text-[#F1F5F9]">
+                      <h2 className="text-xl font-bold text-[#F1F5F9] flex-1">
                         {meta?.nome ?? code}
                       </h2>
+                      <span className="text-2xl font-bold tabular-nums shrink-0" style={{ color: "#2BA88C" }}>
+                        {score}%
+                      </span>
                     </div>
                     <p className="text-sm text-[#94A3B8] leading-relaxed mb-6">{meta?.desc}</p>
 
@@ -1412,25 +1409,37 @@ export default function Resultados() {
                           </span>
                         </div>
                         <p className="text-xs text-[#94A3B8] mb-3">
-                          As disciplinas que mais pesam nesta área.
+                          O que os cursos que combinam contigo pedem, e o que tu tens.
                         </p>
+                        <div className="flex items-center gap-4 mb-3 text-[10px] uppercase tracking-wider text-[#94A3B8]">
+                          <span className="flex items-center gap-1.5"><i className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: "#5B7DB1" }} /> os cursos pedem</span>
+                          <span className="flex items-center gap-1.5"><i className="inline-block w-2.5 h-2.5 rounded-sm" style={{ background: "#2BA88C" }} /> tu tens</span>
+                        </div>
                         {disciplinas.length === 0 ? (
                           <p className="text-sm text-[#94A3B8]">Sem dados.</p>
                         ) : (
-                          <ul className="space-y-2.5">
+                          <ul className="space-y-4">
                             {disciplinas.map((d) => (
                               <li key={d.disciplina}>
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                  <span className="text-sm text-[#F1F5F9] leading-tight min-w-0 flex-1 break-words">
-                                    {d.disciplina}
-                                  </span>
-                                  <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: "#2BA88C" }}>
-                                    {d.match}%
-                                  </span>
+                                <span className="text-sm text-[#F1F5F9] leading-tight break-words block mb-2">
+                                  {d.disciplina}
+                                </span>
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <span className="text-[10px] uppercase text-[#94A3B8] w-11 shrink-0">pedem</span>
+                                  <div className="flex-1 h-2 bg-[#1E293B] rounded-full overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: `${d.match}%`, background: "#5B7DB1" }} />
+                                  </div>
+                                  <span className="text-xs tabular-nums w-9 text-right text-[#CBD5E1]">{d.match}%</span>
                                 </div>
-                                <div className="w-full h-1.5 bg-[#1E293B] rounded-full overflow-hidden">
-                                  <div className="h-full bg-[#2BA88C]" style={{ width: `${d.match}%` }} />
-                                </div>
+                                {d.aptidao != null && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] uppercase text-[#94A3B8] w-11 shrink-0">tens</span>
+                                    <div className="flex-1 h-2 bg-[#1E293B] rounded-full overflow-hidden">
+                                      <div className="h-full rounded-full" style={{ width: `${d.aptidao}%`, background: "#2BA88C" }} />
+                                    </div>
+                                    <span className="text-xs tabular-nums w-9 text-right text-[#CBD5E1]">{d.aptidao}%</span>
+                                  </div>
+                                )}
                               </li>
                             ))}
                           </ul>
