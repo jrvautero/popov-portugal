@@ -212,7 +212,7 @@ interface ResultData {
         nivel: string | null;
       }[];
       cursos: { nome: string; match: number }[];
-      profissoes: { esco: string; prof: string; mymentor: string | null; match: number }[];
+      profissoes: { esco: string; prof: string; mymentor: string | null; match: number; primaria?: boolean }[];
     }
   >;
   top3_areas: string[];
@@ -1179,14 +1179,6 @@ export default function Resultados() {
                   Científico-Humanísticos pela ordem que mais combina contigo. Não é uma
                   decisão fechada, é um ponto de partida para explorares.
                 </p>
-                <div className="rounded-xl border border-[#334155] bg-[#0F172A] p-4">
-                  <p className="text-[10px] uppercase tracking-wide text-[#2BA88C] mb-1">
-                    A que mais combina contigo
-                  </p>
-                  <p className="text-[#F1F5F9] text-lg font-bold">
-                    {CCH_AREAS[ordered[0][0]]?.nome ?? ordered[0][0]}
-                  </p>
-                </div>
               </>
             )}
           </section>
@@ -1537,12 +1529,16 @@ export default function Resultados() {
           {/* Profissões sugeridas, agrupadas pela área (mais forte) de cada uma */}
           {(() => {
             const detalhe = result.cch_detailed ?? {};
-            // Cada profissão fica só na área onde tem maior afinidade, sem repetir.
+            // Cada profissão fica na sua área PRIMÁRIA (marcada pelo backend), sem repetir.
+            // Se, por dados, nenhuma área a marcar como primária, cai na primeira onde aparece.
             const melhor = new Map<string, { esco: string; match: number; code: string }>();
             ordered.forEach(([code]) => {
               (detalhe[code]?.profissoes ?? []).forEach((p) => {
                 const ex = melhor.get(p.esco);
-                if (!ex || p.match > ex.match) melhor.set(p.esco, { esco: p.esco, match: p.match, code });
+                if (!ex) { melhor.set(p.esco, { esco: p.esco, match: p.match, code }); return; }
+                // preferir a área onde é primária
+                const exPrim = (detalhe[ex.code]?.profissoes ?? []).find((q) => q.esco === p.esco)?.primaria;
+                if (p.primaria && !exPrim) melhor.set(p.esco, { esco: p.esco, match: p.match, code });
               });
             });
             // Nome mostrado (mãe). Sem nome = retirada, não aparece.
