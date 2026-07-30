@@ -1534,24 +1534,18 @@ export default function Resultados() {
             </section>
           )}
 
-          {/* Profissões sugeridas (cartões, fora das áreas) */}
+          {/* Profissões sugeridas, agrupadas pela área (mais forte) de cada uma */}
           {(() => {
             const detalhe = result.cch_detailed ?? {};
-            // 1. Reunir cada profissão sugerida com a sua melhor afinidade e área.
-            const mapProf = new Map<string, { esco: string; match: number; area: string }>();
+            // Cada profissão fica só na área onde tem maior afinidade, sem repetir.
+            const melhor = new Map<string, { esco: string; match: number; code: string }>();
             ordered.forEach(([code]) => {
-              const det = detalhe[code];
-              const areaNome = CCH_AREAS[code]?.nome ?? code;
-              (det?.profissoes ?? []).forEach((p) => {
-                const ex = mapProf.get(p.esco);
-                if (!ex || p.match > ex.match) {
-                  mapProf.set(p.esco, { esco: p.esco, match: p.match, area: areaNome });
-                }
+              (detalhe[code]?.profissoes ?? []).forEach((p) => {
+                const ex = melhor.get(p.esco);
+                if (!ex || p.match > ex.match) melhor.set(p.esco, { esco: p.esco, match: p.match, code });
               });
             });
-            // 2. Agrupar pelo nome mostrado. Sem nome = profissão retirada, não se mostra.
-            //    As profissões associadas são as que a pessoa tem nas sugestões, e cada
-            //    uma leva as formações do ISCO dela, sem repetir nomes.
+            // Nome mostrado (mãe). Sem nome = retirada, não aparece.
             const cursosDoIsco = (isco: string | null) => {
               const vistos = new Set<string>();
               const out: { nome: string }[] = [];
@@ -1561,36 +1555,29 @@ export default function Resultados() {
               }
               return out;
             };
-            const maes = new Map<string, {
-              mae: string; match: number; area: string;
-              filhas: { esco: string; prof: string; mymentor: string | null; match: number; cursos: { nome: string }[] }[];
-            }>();
-            for (const p of mapProf.values()) {
-              const det = occDetailMap[p.esco];
+            type Item = { esco: string; mae: string; area: string; match: number;
+              filha: { esco: string; prof: string; mymentor: string | null; cursos: { nome: string }[] } };
+            const porArea = new Map<string, Item[]>();
+            for (const { esco, match, code } of melhor.values()) {
+              const det = occDetailMap[esco];
               const mae = det?.nameProfissao;
               if (!mae) continue;
-              const filha = {
-                esco: p.esco,
-                prof: det.prof,
-                mymentor: det.mymentor,
-                match: p.match,
-                cursos: cursosDoIsco(det.isco_4dig ?? null),
+              const areaNome = CCH_AREAS[code]?.nome ?? code;
+              const item: Item = {
+                esco, mae, area: areaNome, match,
+                filha: { esco, prof: det.prof, mymentor: det.mymentor, cursos: cursosDoIsco(det.isco_4dig ?? null) },
               };
-              const g = maes.get(mae);
-              if (!g) {
-                maes.set(mae, { mae, match: p.match, area: p.area, filhas: [filha] });
-              } else {
-                g.filhas.push(filha);
-                if (p.match > g.match) { g.match = p.match; g.area = p.area; }
-              }
+              (porArea.get(code) ?? porArea.set(code, []).get(code)!).push(item);
             }
-            // 3. Cinco nomes por afinidade; até três profissões associadas em cada.
-            const grupos = [...maes.values()]
-              .map((g) => ({ ...g, filhas: g.filhas.sort((a, b) => b.match - a.match).slice(0, 3) }))
-              .sort((a, b) => b.match - a.match)
-              .slice(0, 5);
-            if (grupos.length === 0) return null;
-            const maxMatch = grupos[0].match || 1;
+            // Grupos pela ordem das áreas; até 3 profissões por área, por afinidade.
+            const gruposArea = ordered
+              .map(([code]) => ({
+                code,
+                nome: CCH_AREAS[code]?.nome ?? code,
+                itens: (porArea.get(code) ?? []).sort((a, b) => b.match - a.match).slice(0, 3),
+              }))
+              .filter((g) => g.itens.length > 0);
+            if (gruposArea.length === 0) return null;
             return (
               <section id="sec9-profissoes" data-idx-label="Profissões" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
                 <div className="flex items-center gap-3 mb-2">
@@ -1598,28 +1585,31 @@ export default function Resultados() {
                   <h2 className="text-2xl font-bold text-[#F1F5F9]">Profissões que podem ser para ti</h2>
                 </div>
                 <p className="text-sm text-[#94A3B8] mb-6">
-                  Uma seleção de caminhos que combinam contigo. Toca numa para saber como se lá chega e onde estudar.
+                  Uma seleção de caminhos que combinam contigo, agrupados pela área do Secundário a que pertencem. Toca numa para saber como se lá chega e onde estudar.
                 </p>
-                <div className="flex flex-col gap-3">
-                  {grupos.map((g) => {
-                    const rel = g.match / maxMatch;
-                    const dot = rel >= 0.8 ? 11 : rel >= 0.55 ? 9 : 7;
-                    const op = rel >= 0.8 ? 1 : rel >= 0.55 ? 0.75 : 0.5;
-                    return (
-                      <button
-                        key={g.mae}
-                        onClick={() => setProfSel9({ mae: g.mae, area: g.area, filhas: g.filhas })}
-                        className="flex items-center gap-3 bg-[#0F172A] border border-[#334155] hover:border-[#2BA88C] rounded-xl p-4 text-left transition-colors"
-                      >
-                        <span
-                          className="rounded-full bg-[#2BA88C] shrink-0"
-                          style={{ width: dot, height: dot, opacity: op }}
-                        />
-                        <span className="text-sm text-[#F1F5F9] flex-1 min-w-0">{g.mae}</span>
-                        <ChevronRight style={{ width: 18, height: 18, color: "#2BA88C", flexShrink: 0 }} />
-                      </button>
-                    );
-                  })}
+                <div className="flex flex-col gap-2">
+                  {gruposArea.map((g, gi) => (
+                    <div
+                      key={g.code}
+                      className="rounded-xl p-3"
+                      style={{ background: gi % 2 ? "rgba(255,255,255,0.02)" : "rgba(43,168,140,0.04)" }}
+                    >
+                      <p className="text-[11px] tracking-wide text-[#8FA2BD] font-medium mb-2 ml-1">{g.nome}</p>
+                      <div className="flex flex-col gap-2">
+                        {g.itens.map((it) => (
+                          <button
+                            key={it.esco}
+                            onClick={() => setProfSel9({ mae: it.mae, area: it.area, filhas: [it.filha] })}
+                            className="flex items-center gap-3 bg-[#0F172A] border border-[#334155] hover:border-[#2BA88C] rounded-xl p-4 text-left transition-colors"
+                          >
+                            <span className="rounded-full bg-[#2BA88C] shrink-0" style={{ width: 7, height: 7, opacity: 0.85 }} />
+                            <span className="text-sm text-[#F1F5F9] flex-1 min-w-0">{it.mae}</span>
+                            <ChevronRight style={{ width: 18, height: 18, color: "#2BA88C", flexShrink: 0 }} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
             );
