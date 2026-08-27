@@ -107,6 +107,37 @@ export default function AdminImport() {
           const riasec_e = parseFloat(row.riasec_e) || null;
           const riasec_c = parseFloat(row.riasec_c) || null;
 
+          // Work Styles e Work Values (por profissão, via onet). Guardados mesmo sem uso no cálculo.
+          const num = (v: any) => (v === undefined || v === null || v === '' ? null : (parseFloat(v) || null));
+          const ws_achievement_effort = num(row['Achievement/Effort']);
+          const ws_persistence = num(row['Persistence']);
+          const ws_initiative = num(row['Initiative']);
+          const ws_leadership = num(row['Leadership']);
+          const ws_cooperation = num(row['Cooperation']);
+          const ws_concern_for_others = num(row['Concern for Others']);
+          const ws_social_orientation = num(row['Social Orientation']);
+          const ws_self_control = num(row['Self Control']);
+          const ws_stress_tolerance = num(row['Stress Tolerance']);
+          const ws_adaptability_flexibility = num(row['Adaptability/Flexibility']);
+          const ws_dependability = num(row['Dependability']);
+          const ws_attention_to_detail = num(row['Attention to Detail']);
+          const ws_integrity = num(row['Integrity']);
+          const ws_independence = num(row['Independence']);
+          const ws_innovation = num(row['Innovation']);
+          const ws_analytical_thinking = num(row['Analytical Thinking']);
+          const ws1 = num(row['WS1']);
+          const ws2 = num(row['WS2']);
+          const ws3 = num(row['WS3']);
+          const wv_achievement = num(row['Achievement']);
+          const wv_working_conditions = num(row['Working Conditions']);
+          const wv_recognition = num(row['Recognition']);
+          const wv_relationships = num(row['Relationships']);
+          const wv_support = num(row['Support']);
+          const wv_independence = num(row['Independence_WV'] ?? row['Independence.1']);
+          const wv1 = num(row['WV1']);
+          const wv2 = num(row['WV2']);
+          const wv3 = num(row['WV3']);
+
           if (i === 0) {
             console.log("[DEBUG] keys do row:", Object.keys(row));
             console.log("[DEBUG] riasec_r raw:", row.riasec_r, "parsed:", riasec_r);
@@ -115,7 +146,9 @@ export default function AdminImport() {
           // Upsert occupation
           const { error: occError } = await supabase
             .from('occupations')
-            .upsert({ esco, isco_4dig, prof, mymentor, onet, cnaef_unico, description, qnqs, name_profissao, familia, riasec_r, riasec_i, riasec_a, riasec_s, riasec_e, riasec_c }, { onConflict: 'esco' });
+            .upsert({ esco, isco_4dig, prof, mymentor, onet, cnaef_unico, description, qnqs, name_profissao, familia, riasec_r, riasec_i, riasec_a, riasec_s, riasec_e, riasec_c,
+              ws_achievement_effort, ws_persistence, ws_initiative, ws_leadership, ws_cooperation, ws_concern_for_others, ws_social_orientation, ws_self_control, ws_stress_tolerance, ws_adaptability_flexibility, ws_dependability, ws_attention_to_detail, ws_integrity, ws_independence, ws_innovation, ws_analytical_thinking, ws1, ws2, ws3,
+              wv_achievement, wv_working_conditions, wv_recognition, wv_relationships, wv_support, wv_independence, wv1, wv2, wv3 }, { onConflict: 'esco' });
 
           if (occError) {
             addProfLog(`⚠ Linha ${i + 1} falhou ao inserir profissão: ${occError.message}`);
