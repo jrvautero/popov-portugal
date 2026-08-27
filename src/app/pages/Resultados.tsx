@@ -225,9 +225,9 @@ interface ResultData {
 const FATOR_NOMES: Record<string, string> = {
   E: "Extroversão",
   A: "Amabilidade",
-  C: "Conscienciosidade",
-  N: "Neuroticismo",
-  I: "Intelecto / Abertura",
+  C: "Organização",
+  N: "Nervosismo",
+  I: "Curiosidade",
 };
 const FATOR_ORDEM = ["E", "A", "C", "N", "I"];
 const PERS_DESCRICOES: Record<string, Record<string, string>> = {
@@ -889,9 +889,14 @@ export default function Resultados() {
     );
   };
 
-  const secaoPersonalidade = (completo: boolean) => {
+  const secaoPersonalidade = (completo: boolean, nono = false) => {
     const ps = result.personality_scores;
     if (!ps || Object.keys(ps).length === 0) return null;
+    // No 9.º ano: nomes fáceis, percentagem sem rótulo. No 12.º: como estava.
+    const nomes = nono
+      ? { E: "Extroversão", A: "Amabilidade", C: "Organização", N: "Nervosismo", I: "Curiosidade" }
+      : { E: "Extroversão", A: "Amabilidade", C: "Conscienciosidade", N: "Neuroticismo", I: "Intelecto / Abertura" };
+    const nomeFator = (f: string) => nomes[f as keyof typeof nomes] ?? FATOR_NOMES[f];
     const ordenado = FATOR_ORDEM
       .filter((f) => ps[f])
       .map((f) => ({ f, ...ps[f] }))
@@ -905,13 +910,12 @@ export default function Resultados() {
           <h2 className="text-lg font-semibold text-white mb-3">A tua personalidade</h2>
           <p className="text-sm text-[#94A3B8] mb-4">
             A tua dimensão mais forte é{" "}
-            <span className="text-[#F1F5F9] font-medium">{FATOR_NOMES[forte.f]}</span> (
-            {forte.banda.toLowerCase()}). A leitura dos cinco traços e a síntese personalizada abrem no
+            <span className="text-[#F1F5F9] font-medium">{nomeFator(forte.f)}</span>. A leitura dos cinco traços e a síntese personalizada abrem no
             relatório completo.
           </p>
           <div className="mb-1 flex justify-between text-sm">
-            <span className="text-[#F1F5F9]">{FATOR_NOMES[forte.f]}</span>
-            <span className="text-[#94A3B8]">{forte.banda}</span>
+            <span className="text-[#F1F5F9]">{nomeFator(forte.f)}</span>
+            <span className="text-[#94A3B8] tabular-nums">{forte.pct}%</span>
           </div>
           <div className="w-full h-2 bg-[#334155] rounded-full overflow-hidden">
             <div className="h-full bg-[#2BA88C]" style={{ width: `${forte.pct}%` }} />
@@ -933,9 +937,9 @@ export default function Resultados() {
           {ordenado.map((d) => (
             <div key={d.f} className="mb-5">
               <div className="flex justify-between text-sm mb-1">
-                <span className="text-[#F1F5F9] font-medium">{FATOR_NOMES[d.f]}</span>
-                <span className="text-[#94A3B8]">
-                  {d.media.toFixed(2)} · {d.banda}
+                <span className="text-[#F1F5F9] font-medium">{nomeFator(d.f)}</span>
+                <span className="text-[#94A3B8] tabular-nums">
+                  {nono ? `${d.pct}%` : `${d.media.toFixed(2)} · ${d.banda}`}
                 </span>
               </div>
               <div className="w-full h-2 bg-[#334155] rounded-full overflow-hidden mb-2">
@@ -943,7 +947,7 @@ export default function Resultados() {
               </div>
               <p className="text-sm text-[#94A3B8] leading-relaxed">
                 {PERS_DESCRICOES[d.f]?.[d.banda]}
-                {d.f === "N" &&
+                {!nono && d.f === "N" &&
                   " (Neste traço, um valor alto significa menos estabilidade emocional.)"}
               </p>
             </div>
@@ -1024,7 +1028,7 @@ export default function Resultados() {
             ))}
           </section>
 
-          {secaoPersonalidade(false)}
+          {secaoPersonalidade(false, isNinthYear)}
 
           {/* Antevisão + desbloqueio */}
           <section className="bg-[#1E293B] border border-[#2BA88C] rounded-lg p-6">
@@ -1184,7 +1188,7 @@ export default function Resultados() {
           </section>
 
           {/* Personalidade */}
-          {secaoPersonalidade(true)}
+          {secaoPersonalidade(true, true)}
 
           {/* Interesses (RIASEC) */}
           <section id="sec9-interesses" data-idx-label="Interesses" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
