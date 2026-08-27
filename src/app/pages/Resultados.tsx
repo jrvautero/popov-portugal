@@ -894,7 +894,7 @@ export default function Resultados() {
     if (!ps || Object.keys(ps).length === 0) return null;
     // No 9.º ano: nomes fáceis, percentagem sem rótulo. No 12.º: como estava.
     const nomes = nono
-      ? { E: "Extroversão", A: "Amabilidade", C: "Organização", N: "Nervosismo", I: "Curiosidade" }
+      ? { E: "Extroversão", A: "Amabilidade", C: "Organização (Conscienciosidade)", N: "Nervosismo (Neuroticismo)", I: "Curiosidade (Abertura)" }
       : { E: "Extroversão", A: "Amabilidade", C: "Conscienciosidade", N: "Neuroticismo", I: "Intelecto / Abertura" };
     const nomeFator = (f: string) => nomes[f as keyof typeof nomes] ?? FATOR_NOMES[f];
     const ordenado = FATOR_ORDEM
