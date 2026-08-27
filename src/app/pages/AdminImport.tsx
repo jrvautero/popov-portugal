@@ -74,6 +74,15 @@ export default function AdminImport() {
       const workbook = XLSX.read(data);
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json<any>(sheet);
+      // Leitura por posição (cabeçalho cru), para distinguir colunas de nome repetido
+      // como 'Independence', que existe em Work Styles e em Work Values.
+      const rowsArr = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 });
+      const headerRow: any[] = (rowsArr[0] as any[]) ?? [];
+      const idxAll = (nome: string) =>
+        headerRow.map((h, k) => (String(h).trim() === nome ? k : -1)).filter((k) => k >= 0);
+      const idxIndep = idxAll('Independence'); // [posWorkStyles, posWorkValues]
+      const wsIndepCol = idxIndep[0] ?? -1;
+      const wvIndepCol = idxIndep.length > 1 ? idxIndep[1] : -1;
 
       addProfLog(`Lidas ${rows.length} linhas do arquivo.`);
 
@@ -122,7 +131,7 @@ export default function AdminImport() {
           const ws_dependability = num(row['Dependability']);
           const ws_attention_to_detail = num(row['Attention to Detail']);
           const ws_integrity = num(row['Integrity']);
-          const ws_independence = num(row['Independence']);
+          const ws_independence = wsIndepCol >= 0 ? num((rowsArr[i + 1] as any[])?.[wsIndepCol]) : num(row['Independence']);
           const ws_innovation = num(row['Innovation']);
           const ws_analytical_thinking = num(row['Analytical Thinking']);
           const ws1 = num(row['WS1']);
@@ -133,7 +142,9 @@ export default function AdminImport() {
           const wv_recognition = num(row['Recognition']);
           const wv_relationships = num(row['Relationships']);
           const wv_support = num(row['Support']);
-          const wv_independence = num(row['Independence_WV'] ?? row['Independence.1']);
+          // A segunda 'Independence' (Work Values) é lida pela posição da coluna,
+          // por o nome ser igual ao de Work Styles.
+          const wv_independence = wvIndepCol >= 0 ? num((rowsArr[i + 1] as any[])?.[wvIndepCol]) : null;
           const wv1 = num(row['WV1']);
           const wv2 = num(row['WV2']);
           const wv3 = num(row['WV3']);
