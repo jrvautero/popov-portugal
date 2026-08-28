@@ -255,7 +255,18 @@ export default function QuestionarioWorkStyles() {
         .filter((p: { estado: string }) => p.estado === 'concluido')
         .map((p: { test_id: string }) => p.test_id)
     );
-    const lista = (catalogo || []) as { id: string; code: string; ordem: number }[];
+    const prioridadeTeste = (code: string) => {
+      if (code.startsWith('interesses')) return 1;
+      if (code.startsWith('work_styles')) return 2;
+      if (code.startsWith('work_values')) return 3;
+      if (code.startsWith('inteligencias')) return 4;
+      if (code.startsWith('personalidade')) return 5;
+      return 99;
+    };
+    const lista = ((catalogo || []) as { id: string; code: string; ordem: number }[])
+      .sort((a, b) => ano === 12
+        ? prioridadeTeste(a.code) - prioridadeTeste(b.code)
+        : a.ordem - b.ordem);
     const todos = lista.length > 0 && lista.every((t) => concluidos.has(t.id));
     const proximo = lista.find((t) => !concluidos.has(t.id));
 
@@ -351,7 +362,7 @@ export default function QuestionarioWorkStyles() {
           {stage === 'intro1' && (
             <div className="flex items-center justify-center min-h-[70vh]">
               <div className="bg-[#1E293B] rounded-xl p-10 max-w-2xl w-full">
-                <h2 className="text-2xl font-bold text-white mb-6">Como gostas de trabalhar</h2>
+                <h2 className="text-2xl font-bold text-white mb-6">Como preferes trabalhar</h2>
                 <p className="text-base text-[#F1F5F9] leading-relaxed mb-6">
                   Vais ver 16 formas de trabalhar. Para cada uma, indica o quanto se parece contigo.
                   Não há respostas certas ou erradas — responde com sinceridade.

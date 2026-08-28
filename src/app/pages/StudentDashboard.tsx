@@ -84,10 +84,23 @@ export default function StudentDashboard() {
         estadoByTest[p.test_id] = p.estado;
       });
 
-      const lista: TestWithState[] = (catalogo || []).map((t: TestRow) => ({
-        ...t,
-        estado: estadoByTest[t.id] ?? 'pendente',
-      }));
+      const ordemSecundario = (code: string) => {
+        if (code.startsWith('interesses')) return 1;
+        if (code.startsWith('work_styles')) return 2;
+        if (code.startsWith('work_values')) return 3;
+        if (code.startsWith('inteligencias')) return 4;
+        if (code.startsWith('personalidade')) return 5;
+        return 99;
+      };
+
+      const lista: TestWithState[] = (catalogo || [])
+        .map((t: TestRow) => ({
+          ...t,
+          estado: estadoByTest[t.id] ?? 'pendente',
+        }))
+        .sort((a, b) => ano === 12
+          ? ordemSecundario(a.code) - ordemSecundario(b.code)
+          : a.ordem - b.ordem);
       setTests(lista);
 
       // 3. Saldo de créditos
@@ -410,7 +423,13 @@ export default function StudentDashboard() {
                         <div className="flex items-center gap-3 min-w-0">
                           <EIcon size={18} style={{ color: cor }} />
                           <div className="min-w-0">
-                            <h3 className="text-base font-semibold text-white break-words">{t.nome}</h3>
+                            <h3 className="text-base font-semibold text-white break-words">{
+                              t.code.startsWith('work_styles')
+                                ? 'Como preferes trabalhar'
+                                : t.code.startsWith('work_values')
+                                ? 'O que seria importante para ti num futuro trabalho'
+                                : t.nome
+                            }</h3>
                             <p className="text-xs mt-1" style={{ color: cor }}>
                               {estadoLabel(t.estado)}
                             </p>

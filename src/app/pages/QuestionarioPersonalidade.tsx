@@ -270,7 +270,18 @@ export default function QuestionarioPersonalidade() {
         .filter((p: { estado: string }) => p.estado === 'concluido')
         .map((p: { test_id: string }) => p.test_id)
     );
-    const lista = (catalogo || []) as { id: string; code: string; ordem: number }[];
+    const prioridadeTeste = (code: string) => {
+      if (code.startsWith('interesses')) return 1;
+      if (code.startsWith('work_styles')) return 2;
+      if (code.startsWith('work_values')) return 3;
+      if (code.startsWith('inteligencias')) return 4;
+      if (code.startsWith('personalidade')) return 5;
+      return 99;
+    };
+    const lista = ((catalogo || []) as { id: string; code: string; ordem: number }[])
+      .sort((a, b) => ano === 12
+        ? prioridadeTeste(a.code) - prioridadeTeste(b.code)
+        : a.ordem - b.ordem);
     const todos = lista.length > 0 && lista.every((t) => concluidos.has(t.id));
     const proximo = lista.find((t) => !concluidos.has(t.id));
 
