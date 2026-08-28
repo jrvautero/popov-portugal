@@ -425,7 +425,7 @@ export default function StudentDashboard() {
                           <div className="min-w-0">
                             <h3 className="text-base font-semibold text-white break-words">{
                               t.code.startsWith('work_styles')
-                                ? 'Como preferes trabalhar'
+                                ? 'Como gostarias de trabalhar?'
                                 : t.code.startsWith('work_values')
                                 ? 'O que seria importante para ti num futuro trabalho'
                                 : t.nome
