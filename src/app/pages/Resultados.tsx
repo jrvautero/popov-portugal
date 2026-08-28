@@ -220,7 +220,41 @@ interface ResultData {
   orientador_text?: string;
   personality_scores?: Record<string, { media: number; pct: number; banda: string }> | null;
   sintese_personalidade?: string | null;
+  ws_scores?: Record<string, number> | null;
+  wv_ordem?: string[] | null;
+  ws_sintese?: string | null;
+  wv_sintese?: string | null;
 }
+
+// Nomes PT dos estilos de trabalho (colunas ws_ da base).
+const WS_NOMES: Record<string, string> = {
+  ws_achievement_effort: "Foco em resultados",
+  ws_persistence: "Persistência",
+  ws_initiative: "Iniciativa",
+  ws_leadership: "Liderança",
+  ws_cooperation: "Cooperação",
+  ws_concern_for_others: "Atenção aos outros",
+  ws_social_orientation: "Orientação para equipa",
+  ws_self_control: "Autocontrolo",
+  ws_stress_tolerance: "Tolerância à pressão",
+  ws_adaptability_flexibility: "Adaptação",
+  ws_dependability: "Fiabilidade",
+  ws_attention_to_detail: "Atenção ao detalhe",
+  ws_integrity: "Integridade",
+  ws_independence: "Autonomia",
+  ws_innovation: "Inovação",
+  ws_analytical_thinking: "Pensamento analítico",
+};
+
+// Nomes PT dos valores de trabalho (colunas wv_ da base).
+const WV_NOMES: Record<string, string> = {
+  wv_achievement: "Realização",
+  wv_working_conditions: "Condições de trabalho",
+  wv_recognition: "Reconhecimento",
+  wv_relationships: "Relações",
+  wv_support: "Apoio",
+  wv_independence: "Autonomia",
+};
 
 const FATOR_NOMES: Record<string, string> = {
   E: "Extroversão",
@@ -1908,6 +1942,54 @@ export default function Resultados() {
           </div>
         </section>
 
+        {/* Como gostas de trabalhar (Work Styles) — só quando há dados */}
+        {result.ws_scores && Object.keys(result.ws_scores).length > 0 && (
+          <section id="sec-estilos" data-idx-label="Estilo de trabalho" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">Como gostas de trabalhar</h2>
+            {/* Gráfico: os 3 estilos mais altos da pessoa */}
+            <div className="space-y-3 mb-6 max-w-xl">
+              {Object.entries(result.ws_scores)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([campo, val]) => (
+                  <div key={campo}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm text-[#F1F5F9]">{WS_NOMES[campo] ?? campo}</span>
+                      <span className="text-sm font-semibold text-[#2BA88C]">{Math.round((val / 5) * 100)}%</span>
+                    </div>
+                    <div className="w-full h-2.5 bg-[#334155] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#2BA88C] rounded-full" style={{ width: `${(val / 5) * 100}%` }} />
+                    </div>
+                  </div>
+                ))}
+            </div>
+            {result.ws_sintese && (
+              <p className="text-base text-[#CBD5E1] leading-relaxed">{result.ws_sintese}</p>
+            )}
+          </section>
+        )}
+
+        {/* O que valorizas no trabalho (Work Values) — só quando há dados */}
+        {result.wv_ordem && result.wv_ordem.length > 0 && (
+          <section id="sec-valores" data-idx-label="Valores" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">O que valorizas no trabalho</h2>
+            {/* Os 3 valores que a pessoa pôs em primeiro */}
+            <div className="space-y-3 mb-6 max-w-xl">
+              {result.wv_ordem.slice(0, 3).map((campo, i) => (
+                <div key={campo} className="flex items-center gap-4 bg-[#0F172A] border border-[#334155] rounded-lg p-4">
+                  <span className="w-8 h-8 rounded-full bg-[#2BA88C] text-white text-sm font-bold flex items-center justify-center shrink-0">
+                    {i + 1}
+                  </span>
+                  <span className="text-base text-[#F1F5F9] font-medium">{WV_NOMES[campo] ?? campo}</span>
+                </div>
+              ))}
+            </div>
+            {result.wv_sintese && (
+              <p className="text-base text-[#CBD5E1] leading-relaxed">{result.wv_sintese}</p>
+            )}
+          </section>
+        )}
+
         {/* Inteligências — Pontos Fortes e Desafios */}
         <section id="sec-inteligencias" data-idx-label="Pontos fortes" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
           <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
@@ -2003,6 +2085,48 @@ export default function Resultados() {
 
             </div>
           </div>
+        </section>
+
+        {/* Como estudas melhor — baseado nas inteligências fortes (modelo do 9.º) */}
+        <section id="sec-estudo" data-idx-label="Como estudas melhor" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+          <div className="flex items-center gap-3 mb-2">
+            <Calculator style={{ width: 28, height: 28, color: "#2BA88C", flexShrink: 0 }} />
+            <h2 className="text-2xl font-bold text-[#F1F5F9]">Como estudas melhor</h2>
+          </div>
+          <p className="text-sm text-[#94A3B8] mb-6">
+            As tuas três formas mais fortes dão-te pistas para estudares de um jeito que resulta melhor contigo.
+          </p>
+          {(() => {
+            const dominantesInt = Object.entries(result.intel_scores ?? {})
+              .sort((a, b) => Number(b[1]) - Number(a[1]))
+              .slice(0, 3);
+            return (
+              <div className="divide-y divide-[#334155]">
+                {dominantesInt.map(([cod]) => {
+                  const info = ESTUDO_POR_INTEL[cod];
+                  const Icon = INTEL_ICONS[cod] ?? BookOpen;
+                  if (!info) return null;
+                  return (
+                    <div key={cod} className="py-5 first:pt-0 last:pb-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Icon style={{ width: 22, height: 22, color: "#2BA88C", flexShrink: 0 }} />
+                        <h3 className="text-lg font-bold text-[#F1F5F9]">{INTEL_NAMES[cod] ?? cod}</h3>
+                      </div>
+                      <p className="text-sm text-[#F1F5F9] mb-2">
+                        Como tens mais em {(INTEL_NAMES[cod] ?? cod).toLowerCase()}, {info.como.charAt(0).toLowerCase() + info.como.slice(1)} Experimenta:
+                      </p>
+                      <ul className="space-y-1 mb-2">
+                        {info.dicas.map((d, i) => (
+                          <li key={i} className="text-sm text-[#94A3B8]">· {d}</li>
+                        ))}
+                      </ul>
+                      <p className="text-xs text-[#94A3B8] italic">{info.livres}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </section>
 
         {/* Itinerários Profissionais */}
