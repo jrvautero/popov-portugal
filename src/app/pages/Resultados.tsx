@@ -1002,6 +1002,13 @@ export default function Resultados() {
     );
   };
 
+  // Determina se o resultado é do 9.º ano ANTES de qualquer retorno condicional.
+  // Esta variável é usada também no resultado sintético; se for declarada apenas
+  // mais abaixo, o JavaScript entra na temporal dead zone (TDZ) e lança
+  // "Cannot access ... before initialization", deixando a página em branco.
+  const cch = result.cch_area_scores;
+  const isNinthYear = !!cch && Object.keys(cch).length > 0;
+
   if (result.nivel === "sintetico") {
     const riasecRows = Object.entries(result.riasec_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
     const intelRows = Object.entries(result.intel_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
@@ -1104,8 +1111,6 @@ export default function Resultados() {
 
   // ─── Vista do 9.º ano (3.º ciclo): áreas do Secundário ───────────────────
   // O backend só preenche cch_area_scores para alunos do 3.º ciclo.
-  const cch = result.cch_area_scores;
-  const isNinthYear = !!cch && Object.keys(cch).length > 0;
 
   if (isNinthYear) {
     const cchScores = cch as Record<string, number>;
