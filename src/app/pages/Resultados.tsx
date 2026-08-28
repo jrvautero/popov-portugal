@@ -107,8 +107,6 @@ const ESTUDO_POR_INTEL: Record<string, { como: string; dicas: string[]; livres: 
 };
 
 const AREA_DESCRIPTIONS: Record<string, string> = {
-  // A Educação é o código 1 (CNAEF 1xx). Estava aqui como "0", que não
-  // correspondia ao código produzido pelo cálculo, e a área ficava sem texto.
   "1": "Esta área abrange formações ligadas ao ensino, à investigação pedagógica e ao desenvolvimento humano em todas as idades. Podes trabalhar em escolas, universidades, organizações educativas ou no desenvolvimento de materiais didáticos. As tuas competências de comunicação, paciência e empatia serão uma mais-valia para teres um impacto positivo na vida de outras pessoas.",
   "2": "Esta área inclui formações em artes visuais, música, literatura, história, filosofia e línguas. Podes trabalhar em criação artística, produção cultural, ensino, investigação ou comunicação. A tua sensibilidade estética, capacidade crítica e expressão criativa serão centrais no teu percurso profissional.",
   "3": "Esta área reúne formações em administração, economia, direito, jornalismo, sociologia e ciências do comportamento. Podes trabalhar em empresas privadas, organismos públicos, escritórios de advocacia ou organizações sociais. As tuas competências analíticas, comunicativas e de tomada de decisão guiarão o teu caminho.",
@@ -120,7 +118,6 @@ const AREA_DESCRIPTIONS: Record<string, string> = {
 };
 
 const AREA_IMAGES: Record<string, string> = {
-  // Educação = código 1 (CNAEF 1xx), não 0.
   "1": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800",
   "2": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800",
   "3": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800",
@@ -142,7 +139,6 @@ const INTEL_IMAGES: Record<string, string> = {
 };
 
 const CNAEF_ICONS: Record<string, React.ElementType> = {
-  // Educação = código 1 (CNAEF 1xx), não 0.
   "1": GraduationCap,
   "2": Palette,
   "3": Scale,
@@ -586,22 +582,6 @@ export default function Resultados() {
           });
           setMymentorMap(mmMap);
           setOccDetailMap(detailMap);
-          // As profissões mostradas passam pelo mesmo crivo das áreas: só entram as
-          // que têm área formativa (cnaef_unico válido). Sem isto apareciam no topo
-          // profissões que não contam para área nenhuma, e a lista não batia certo
-          // com os itinerários.
-          const temArea = (e: string) => {
-            const c = detailMap[e]?.cnaef_unico;
-            if (!c) return false;
-            const n = parseInt(String(c).trim(), 10);
-            return Number.isFinite(n) && n > 0;
-          };
-          const top10Escos = top50Escos.filter(temArea).slice(0, 10);
-          setTopOccupations(
-            top10Escos
-              .filter((e) => nameMap[e])
-              .map((e) => ({ name: nameMap[e], score: Math.round(occScores[e] * 100), mymentor: mmMap[e] }))
-          );
 
           // Collect unique isco_4dig from top 5 profs per each of the 3 areas for training lookup
           const areaNameMapCurrent = areaNameMapRef.current;
@@ -610,6 +590,28 @@ export default function Resultados() {
             .sort((a, b) => Number(b[1]) - Number(a[1]))
             .slice(0, 3)
             .map(([c]) => c);
+
+          // As profissões do topo só podem ser das áreas destacadas. Sem isto
+          // apareciam profissões de áreas que o aluno não vê em lado nenhum.
+          const areaDe = (e: string): string | null => {
+            const c = detailMap[e]?.cnaef_unico;
+            if (!c) return null;
+            const n2 = parseInt(String(c).trim(), 10);
+            if (!Number.isFinite(n2)) return null;
+            const n1 = Math.floor(n2 / 100);
+            return n1 > 0 ? String(n1) : null;
+          };
+          const top10Escos = top50Escos
+            .filter((e) => {
+              const a = areaDe(e);
+              return a != null && top3Cods.includes(a);
+            })
+            .slice(0, 10);
+          setTopOccupations(
+            top10Escos
+              .filter((e) => nameMap[e])
+              .map((e) => ({ name: nameMap[e], score: Math.round(occScores[e] * 100), mymentor: mmMap[e] }))
+          );
 
           const iscoSet = new Set<string>();
           // Profissões sugeridas no 9.º ano: precisam das formações do próprio ISCO.
