@@ -1950,7 +1950,7 @@ export default function Resultados() {
         {/* Como gostas de trabalhar (Work Styles) — só quando há dados */}
         {result.ws_scores && Object.keys(result.ws_scores).length > 0 && (
           <section id="sec-estilos" data-idx-label="Estilo de trabalho" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">Como gostas de trabalhar</h2>
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">Como gostarias de trabalhar</h2>
             {/* Gráfico: os 3 estilos mais altos da pessoa */}
             <div className="space-y-3 mb-6 max-w-xl">
               {Object.entries(result.ws_scores)
@@ -1977,7 +1977,7 @@ export default function Resultados() {
         {/* O que valorizas no trabalho (Work Values) — só quando há dados */}
         {result.wv_ordem && result.wv_ordem.length > 0 && (
           <section id="sec-valores" data-idx-label="Valores" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">O que valorizas no trabalho</h2>
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">O que seria importante para ti num futuro trabalho</h2>
             {/* Os 3 valores que a pessoa pôs em primeiro */}
             <div className="space-y-3 mb-6 max-w-xl">
               {result.wv_ordem.slice(0, 3).map((campo, i) => (
