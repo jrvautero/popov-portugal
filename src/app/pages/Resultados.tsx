@@ -314,6 +314,9 @@ interface OccDetail {
   cnaef_unico: string | null;
   isco_4dig: string | null;
   score: number;
+  // Valor de trabalho em que esta profissão pontua mais alto (coluna wv_ da base).
+  // Serve para, na secção dos valores, mostrar as profissões ligadas a cada um.
+  wvTopo: string | null;
 }
 
 interface OccupationRow {
@@ -339,6 +342,10 @@ export default function Resultados() {
   const [error, setError] = useState<string | null>(null);
   const [riasecDescriptions, setRiasecDescriptions] = useState<Record<string, string>>({});
   const [profCursoSel, setProfCursoSel] = useState<{ area: string; curso: string } | null>(null);
+  // Valor de trabalho aberto na secção "O que seria importante para ti" (segunda
+  // aparição, antes de "Escolhe o teu caminho"). Ao abrir, mostra as profissões
+  // já apresentadas nas áreas que pontuam mais alto nesse valor.
+  const [valorAberto, setValorAberto] = useState<string | null>(null);
   const [intelDescriptions, setIntelDescriptions] = useState<Record<string, string>>({});
   const [orientadorText, setOrientadorText] = useState<string>("");
   const [loadingOrientador, setLoadingOrientador] = useState(false);
@@ -557,7 +564,7 @@ export default function Resultados() {
       if (top200Escos.length > 0) {
         const { data: occData, error: occError } = await supabase
           .from("occupations")
-          .select("esco, prof, mymentor, cnaef_unico, isco_4dig, name_profissao")
+          .select("esco, prof, mymentor, cnaef_unico, isco_4dig, name_profissao, wv_achievement, wv_working_conditions, wv_recognition, wv_relationships, wv_support, wv_independence")
           .in("esco", top200Escos);
 
         if (occError) {
@@ -578,6 +585,16 @@ export default function Resultados() {
               cnaef_unico: o.cnaef_unico ?? null,
               isco_4dig: o.isco_4dig ?? null,
               score: occScores[o.esco] ?? 0,
+              wvTopo: (() => {
+                const linha = o as unknown as Record<string, unknown>;
+                let melhor: string | null = null;
+                let max = -Infinity;
+                for (const campo of Object.keys(WV_NOMES)) {
+                  const v = linha[campo];
+                  if (typeof v === "number" && v > max) { max = v; melhor = campo; }
+                }
+                return melhor;
+              })(),
             };
           });
           setMymentorMap(mmMap);
@@ -601,14 +618,12 @@ export default function Resultados() {
             const n1 = Math.floor(n2 / 100);
             return n1 > 0 ? String(n1) : null;
           };
-          // O topo mostra exatamente as profissões que as áreas mostram:
-          // as 5 melhores de cada uma das 3 áreas destacadas. Sem corte próprio,
-          // para as duas listas nunca divergirem.
-          const top10Escos = top3Cods.flatMap((cod) =>
-            top50Escos
-              .filter((e) => areaDe(e) === cod)
-              .slice(0, 5)
-          ).sort((a, b) => occScores[b] - occScores[a]);
+          const top10Escos = top50Escos
+            .filter((e) => {
+              const a = areaDe(e);
+              return a != null && top3Cods.includes(a);
+            })
+            .slice(0, 10);
           setTopOccupations(
             top10Escos
               .filter((e) => nameMap[e])
@@ -2015,11 +2030,6 @@ export default function Resultados() {
 
         {/* Inteligências — Pontos Fortes e Desafios */}
         <section id="sec-inteligencias" data-idx-label="Pontos fortes" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-          <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">As tuas inteligências</h2>
-          <p className="text-sm text-[#94A3B8] mb-6">
-            Todos temos formas diferentes de aprender e de resolver problemas. Aqui vês
-            aquelas em que te destacas mais e aquelas com que te identificas menos.
-          </p>
           <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
 
             {/* Coluna esquerda — títulos descritivos */}
@@ -2307,11 +2317,6 @@ export default function Resultados() {
             <h2 className="text-sm font-semibold uppercase tracking-widest text-[#94A3B8]">
               Profissões com maior afinidade
             </h2>
-            <p className="text-sm text-[#CBD5E1] mb-1">
-              Esta lista é geral: são as profissões com maior afinidade em todo o teu
-              resultado, sem separação por área. Mais abaixo, dentro de cada itinerário,
-              vais encontrar outra lista, só com as profissões dessa área.
-            </p>
             <p className="text-sm italic text-[#94A3B8] mb-3">
               Clica em cada profissão para saberes mais.
             </p>
@@ -2519,6 +2524,107 @@ export default function Resultados() {
                   </div>
                 );
               })}
+            </section>
+          );
+        })()}
+
+        {/* O que seria importante para ti — segunda aparição, ligada às profissões.
+            Só usa profissões já mostradas nas áreas destacadas; não inventa nenhuma. */}
+        {result.wv_ordem && result.wv_ordem.length > 0 && Object.keys(areaNameMapRef.current).length > 0 && (() => {
+          const top3 = Object.entries(cnaefN1Scores)
+            .filter(([cod]) => !!areaNameMapRef.current[cod])
+            .sort((a, b) => Number(b[1]) - Number(a[1]))
+            .slice(0, 3)
+            .map(([cod]) => cod);
+          if (top3.length === 0) return null;
+
+          // As mesmas profissões que aparecem nas áreas: as 5 melhores de cada uma.
+          const daArea = (cod: string) =>
+            Object.entries(occDetailMap)
+              .filter(([, occ]) => {
+                if (!occ.cnaef_unico) return false;
+                const n2 = parseInt(occ.cnaef_unico, 10);
+                return !isNaN(n2) && Math.floor(n2 / 100) === parseInt(cod, 10);
+              })
+              .sort((a, b) => b[1].score - a[1].score)
+              .slice(0, 5);
+          const mostradas = top3.flatMap((cod) => daArea(cod));
+
+          return (
+            <section id="sec-valores-profissoes" data-idx-label="Valores e profissões" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+              <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">O que seria importante para ti num futuro trabalho</h2>
+              <p className="text-sm text-[#94A3B8] mb-6">
+                Toca num dos teus valores para veres, entre as profissões que te mostrámos,
+                aquelas em que esse valor pesa mais.
+              </p>
+              <div className="flex flex-col gap-2">
+                {result.wv_ordem!.map((campo, i) => {
+                  const aberto = valorAberto === campo;
+                  const profs = mostradas
+                    .filter(([, occ]) => occ.wvTopo === campo)
+                    .sort((a, b) => b[1].score - a[1].score);
+                  return (
+                    <div key={campo}>
+                      <button
+                        onClick={() => setValorAberto(aberto ? null : campo)}
+                        className="w-full flex items-center gap-4 rounded-lg border px-4 py-4 text-left transition-colors"
+                        style={{
+                          backgroundColor: aberto ? "#1E293B" : "#0F172A",
+                          borderColor: aberto ? "#2BA88C" : "#334155",
+                        }}
+                      >
+                        <span className="w-8 h-8 rounded-full bg-[#2BA88C] text-white text-sm font-bold flex items-center justify-center shrink-0">
+                          {i + 1}
+                        </span>
+                        <span className="text-base text-[#F1F5F9] font-medium flex-1">
+                          {WV_NOMES[campo] ?? campo}
+                        </span>
+                        <span className="text-xs text-[#94A3B8] shrink-0">
+                          {profs.length > 0 ? `${profs.length} profissões` : "sem profissões"}
+                        </span>
+                        <ChevronDown
+                          className={`w-5 h-5 text-[#2BA88C] shrink-0 transition-transform ${aberto ? "rotate-180" : ""}`}
+                        />
+                      </button>
+                      {aberto && (
+                        <div className="mt-2 mb-1 px-4 py-3 rounded-lg bg-[#0F172A] border border-[#334155]">
+                          {profs.length > 0 ? (
+                            <ul className="space-y-2">
+                              {profs.map(([esco, occ]) => {
+                                const url = buildMymentorUrl(occ.mymentor);
+                                return (
+                                  <li key={esco} className="flex items-center justify-between gap-2">
+                                    {url ? (
+                                      <a
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="group inline-flex items-center gap-1 text-sm text-[#F1F5F9] hover:text-[#2BA88C] hover:underline min-w-0 flex-1"
+                                      >
+                                        <span className="truncate">{occ.prof}</span>
+                                        <ExternalLink style={{ width: 12, height: 12, color: "#2BA88C", flexShrink: 0 }} />
+                                      </a>
+                                    ) : (
+                                      <span className="text-sm text-[#F1F5F9] truncate flex-1">{occ.prof}</span>
+                                    )}
+                                    <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: "#2BA88C" }}>
+                                      {Math.round(occ.score * 100)}%
+                                    </span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          ) : (
+                            <p className="text-sm text-[#94A3B8]">
+                              Nenhuma das profissões que te mostrámos tem este valor como o mais forte.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           );
         })()}
