@@ -601,12 +601,14 @@ export default function Resultados() {
             const n1 = Math.floor(n2 / 100);
             return n1 > 0 ? String(n1) : null;
           };
-          const top10Escos = top50Escos
-            .filter((e) => {
-              const a = areaDe(e);
-              return a != null && top3Cods.includes(a);
-            })
-            .slice(0, 10);
+          // O topo mostra exatamente as profissões que as áreas mostram:
+          // as 5 melhores de cada uma das 3 áreas destacadas. Sem corte próprio,
+          // para as duas listas nunca divergirem.
+          const top10Escos = top3Cods.flatMap((cod) =>
+            top50Escos
+              .filter((e) => areaDe(e) === cod)
+              .slice(0, 5)
+          ).sort((a, b) => occScores[b] - occScores[a]);
           setTopOccupations(
             top10Escos
               .filter((e) => nameMap[e])
@@ -2013,6 +2015,11 @@ export default function Resultados() {
 
         {/* Inteligências — Pontos Fortes e Desafios */}
         <section id="sec-inteligencias" data-idx-label="Pontos fortes" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+          <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">As tuas inteligências</h2>
+          <p className="text-sm text-[#94A3B8] mb-6">
+            Todos temos formas diferentes de aprender e de resolver problemas. Aqui vês
+            aquelas em que te destacas mais e aquelas com que te identificas menos.
+          </p>
           <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
 
             {/* Coluna esquerda — títulos descritivos */}
@@ -2300,6 +2307,11 @@ export default function Resultados() {
             <h2 className="text-sm font-semibold uppercase tracking-widest text-[#94A3B8]">
               Profissões com maior afinidade
             </h2>
+            <p className="text-sm text-[#CBD5E1] mb-1">
+              Esta lista é geral: são as profissões com maior afinidade em todo o teu
+              resultado, sem separação por área. Mais abaixo, dentro de cada itinerário,
+              vais encontrar outra lista, só com as profissões dessa área.
+            </p>
             <p className="text-sm italic text-[#94A3B8] mb-3">
               Clica em cada profissão para saberes mais.
             </p>
