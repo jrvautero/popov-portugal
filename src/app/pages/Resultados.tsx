@@ -107,7 +107,9 @@ const ESTUDO_POR_INTEL: Record<string, { como: string; dicas: string[]; livres: 
 };
 
 const AREA_DESCRIPTIONS: Record<string, string> = {
-  "0": "Esta área abrange formações ligadas ao ensino, à investigação pedagógica e ao desenvolvimento humano em todas as idades. Podes trabalhar em escolas, universidades, organizações educativas ou no desenvolvimento de materiais didáticos. As tuas competências de comunicação, paciência e empatia serão uma mais-valia para teres um impacto positivo na vida de outras pessoas.",
+  // A Educação é o código 1 (CNAEF 1xx). Estava aqui como "0", que não
+  // correspondia ao código produzido pelo cálculo, e a área ficava sem texto.
+  "1": "Esta área abrange formações ligadas ao ensino, à investigação pedagógica e ao desenvolvimento humano em todas as idades. Podes trabalhar em escolas, universidades, organizações educativas ou no desenvolvimento de materiais didáticos. As tuas competências de comunicação, paciência e empatia serão uma mais-valia para teres um impacto positivo na vida de outras pessoas.",
   "2": "Esta área inclui formações em artes visuais, música, literatura, história, filosofia e línguas. Podes trabalhar em criação artística, produção cultural, ensino, investigação ou comunicação. A tua sensibilidade estética, capacidade crítica e expressão criativa serão centrais no teu percurso profissional.",
   "3": "Esta área reúne formações em administração, economia, direito, jornalismo, sociologia e ciências do comportamento. Podes trabalhar em empresas privadas, organismos públicos, escritórios de advocacia ou organizações sociais. As tuas competências analíticas, comunicativas e de tomada de decisão guiarão o teu caminho.",
   "4": "Esta área abrange formações em matemática, física, química, biologia, estatística e tecnologias de informação. Podes trabalhar em investigação científica, desenvolvimento de software, análise de dados ou ensino. A tua curiosidade investigativa e o teu raciocínio lógico serão fundamentais.",
@@ -118,7 +120,8 @@ const AREA_DESCRIPTIONS: Record<string, string> = {
 };
 
 const AREA_IMAGES: Record<string, string> = {
-  "0": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800",
+  // Educação = código 1 (CNAEF 1xx), não 0.
+  "1": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800",
   "2": "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800",
   "3": "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800",
   "4": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800",
@@ -139,7 +142,8 @@ const INTEL_IMAGES: Record<string, string> = {
 };
 
 const CNAEF_ICONS: Record<string, React.ElementType> = {
-  "0": GraduationCap,
+  // Educação = código 1 (CNAEF 1xx), não 0.
+  "1": GraduationCap,
   "2": Palette,
   "3": Scale,
   "4": Atom,
@@ -1012,6 +1016,13 @@ export default function Resultados() {
     );
   };
 
+  // Determina se o resultado é do 9.º ano ANTES de qualquer retorno condicional.
+  // Esta variável é usada também no resultado sintético; se for declarada apenas
+  // mais abaixo, o JavaScript entra na temporal dead zone (TDZ) e lança
+  // "Cannot access ... before initialization", deixando a página em branco.
+  const cch = result.cch_area_scores;
+  const isNinthYear = !!cch && Object.keys(cch).length > 0;
+
   if (result.nivel === "sintetico") {
     const riasecRows = Object.entries(result.riasec_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
     const intelRows = Object.entries(result.intel_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
@@ -1114,8 +1125,6 @@ export default function Resultados() {
 
   // ─── Vista do 9.º ano (3.º ciclo): áreas do Secundário ───────────────────
   // O backend só preenche cch_area_scores para alunos do 3.º ciclo.
-  const cch = result.cch_area_scores;
-  const isNinthYear = !!cch && Object.keys(cch).length > 0;
 
   if (isNinthYear) {
     const cchScores = cch as Record<string, number>;
@@ -1952,10 +1961,10 @@ export default function Resultados() {
           </div>
         </section>
 
-        {/* Como gostas de trabalhar (Work Styles) — só quando há dados */}
+        {/* Como gostarias de trabalhar (Work Styles) — só quando há dados */}
         {result.ws_scores && Object.keys(result.ws_scores).length > 0 && (
           <section id="sec-estilos" data-idx-label="Estilo de trabalho" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">Como gostas de trabalhar</h2>
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">Como gostarias de trabalhar</h2>
             {/* Gráfico: os 3 estilos mais altos da pessoa */}
             <div className="space-y-3 mb-6 max-w-xl">
               {Object.entries(result.ws_scores)
@@ -1979,10 +1988,10 @@ export default function Resultados() {
           </section>
         )}
 
-        {/* O que valorizas no trabalho (Work Values) — só quando há dados */}
+        {/* O que seria importante para ti num futuro trabalho (Work Values) — só quando há dados */}
         {result.wv_ordem && result.wv_ordem.length > 0 && (
           <section id="sec-valores" data-idx-label="Valores" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">O que valorizas no trabalho</h2>
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">O que seria importante para ti num futuro trabalho</h2>
             {/* Os 3 valores que a pessoa pôs em primeiro */}
             <div className="space-y-3 mb-6 max-w-xl">
               {result.wv_ordem.slice(0, 3).map((campo, i) => (
