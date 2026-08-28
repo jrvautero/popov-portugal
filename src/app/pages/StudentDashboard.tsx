@@ -157,6 +157,10 @@ export default function StudentDashboard() {
     navigate(
       code.startsWith('personalidade')
         ? `/app/questionario-personalidade?teste=${encodeURIComponent(code)}`
+        : code.startsWith('work_styles')
+        ? `/app/questionario-estilos?teste=${encodeURIComponent(code)}`
+        : code.startsWith('work_values')
+        ? `/app/questionario-valores?teste=${encodeURIComponent(code)}`
         : `/app/questionario?teste=${encodeURIComponent(code)}`
     );
   };
