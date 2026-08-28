@@ -7,6 +7,8 @@ import ResetPassword from './pages/ResetPassword';
 import StudentDashboard from './pages/StudentDashboard';
 import Questionario from './pages/Questionario';
 import QuestionarioPersonalidade from './pages/QuestionarioPersonalidade';
+import QuestionarioWorkStyles from './pages/QuestionarioWorkStyles';
+import QuestionarioWorkValues from './pages/QuestionarioWorkValues';
 import Perfil from './pages/Perfil';
 import Resultados from './pages/Resultados';
 import CounselorDashboard from './pages/CounselorDashboard';
@@ -43,6 +45,22 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['student']}>
               <QuestionarioPersonalidade />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/questionario-estilos"
+          element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <QuestionarioWorkStyles />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/app/questionario-valores"
+          element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <QuestionarioWorkValues />
             </ProtectedRoute>
           }
         />
