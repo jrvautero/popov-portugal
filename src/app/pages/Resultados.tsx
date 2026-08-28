@@ -1947,7 +1947,7 @@ export default function Resultados() {
           </div>
         </section>
 
-        {/* Como gostas de trabalhar (Work Styles) — só quando há dados */}
+        {/* Como gostarias de trabalhar (Work Styles) — só quando há dados */}
         {result.ws_scores && Object.keys(result.ws_scores).length > 0 && (
           <section id="sec-estilos" data-idx-label="Estilo de trabalho" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
             <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">Como gostarias de trabalhar</h2>
@@ -1974,7 +1974,7 @@ export default function Resultados() {
           </section>
         )}
 
-        {/* O que valorizas no trabalho (Work Values) — só quando há dados */}
+        {/* O que seria importante para ti num futuro trabalho (Work Values) — só quando há dados */}
         {result.wv_ordem && result.wv_ordem.length > 0 && (
           <section id="sec-valores" data-idx-label="Valores" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
             <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">O que seria importante para ti num futuro trabalho</h2>
