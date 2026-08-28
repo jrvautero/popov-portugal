@@ -2152,11 +2152,16 @@ export default function Resultados() {
 
         {/* Itinerários Profissionais */}
         {Object.keys(areaNameMapRef.current).length > 0 && (() => {
-          const radarData = Object.entries(areaNameMapRef.current).map(([cod, name]) => ({
-            area: name ?? cod,
-            cod,
-            value: Math.round((Number(cnaefN1Scores[cod] ?? 0) / maxAreaScore) * 100),
-          }));
+          // Áreas sem pontuação não entram no gráfico. Antes apareciam a 0%,
+          // o que dizia ao aluno que não servia para elas — falso: apenas não
+          // tinha profissões dessa área nas finais.
+          const radarData = Object.entries(areaNameMapRef.current)
+            .filter(([cod]) => Number(cnaefN1Scores[cod] ?? 0) > 0)
+            .map(([cod, name]) => ({
+              area: name ?? cod,
+              cod,
+              value: Math.round((Number(cnaefN1Scores[cod] ?? 0) / maxAreaScore) * 100),
+            }));
 
           const renderRadarTick = ({ x, y, payload }: { x: number; y: number; payload: { index: number } }) => {
             const entry = radarData[payload.index];
