@@ -399,7 +399,7 @@ export default function QuestionarioWorkValues() {
             <DndProvider backend={HTML5Backend}>
               <div className="py-8">
                 <h2 className="text-xl font-bold text-white mb-1">Ordena do mais para o menos importante</h2>
-                <p className="text-sm text-[#94A3B8] mb-6">Arrasta os blocos. O 1 é o que mais valorizas.</p>
+                <p className="text-sm text-[#94A3B8] mb-6">Arrasta os blocos. O 1 é o que seria mais importante para ti.</p>
                 <div className="space-y-3">
                   {ordem.map((item, index) => (
                     <BlocoValor key={item.cod} item={item} index={index} mover={mover} />
