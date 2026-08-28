@@ -234,6 +234,8 @@ export default function Questionario() {
         await supabase.from('interest_answers').delete().eq('session_id', currentSessionId);
         await supabase.from('intelligence_answers').delete().eq('session_id', currentSessionId);
         await supabase.from('personality_responses').delete().eq('session_id', currentSessionId);
+        await supabase.from('ws_answers').delete().eq('session_id', currentSessionId);
+        await supabase.from('wv_answers').delete().eq('session_id', currentSessionId);
         setInterestAnswers({});
         setIntelligenceAnswers({});
         intCount = 0;
@@ -514,6 +516,10 @@ export default function Questionario() {
     // Recarrega a página do questionário com o novo teste.
     window.location.href = proximoTesteCode.startsWith('personalidade')
       ? `/app/questionario-personalidade?teste=${encodeURIComponent(proximoTesteCode)}`
+      : proximoTesteCode.startsWith('work_styles')
+      ? `/app/questionario-estilos?teste=${encodeURIComponent(proximoTesteCode)}`
+      : proximoTesteCode.startsWith('work_values')
+      ? `/app/questionario-valores?teste=${encodeURIComponent(proximoTesteCode)}`
       : `/app/questionario?teste=${encodeURIComponent(proximoTesteCode)}`;
   };
 
