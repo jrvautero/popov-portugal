@@ -2552,13 +2552,13 @@ export default function Resultados() {
 
           return (
             <section id="sec-valores-profissoes" data-idx-label="Valores e profissões" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-              <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">O que seria importante para ti num futuro trabalho</h2>
+              <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">Os teus valores e as profissões</h2>
               <p className="text-sm text-[#94A3B8] mb-6">
-                Toca num dos teus valores para veres, entre as profissões que te mostrámos,
-                aquelas em que esse valor pesa mais.
+                Toca num dos três valores que puseste em primeiro para veres, entre as
+                profissões que te mostrámos, aquelas em que esse valor pesa mais.
               </p>
               <div className="flex flex-col gap-2">
-                {result.wv_ordem!.map((campo, i) => {
+                {result.wv_ordem!.slice(0, 3).map((campo, i) => {
                   const aberto = valorAberto === campo;
                   const profs = mostradas
                     .filter(([, occ]) => occ.wvTopo === campo)
