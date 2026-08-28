@@ -242,19 +242,6 @@ export default function QuestionarioWorkValues() {
     });
   };
 
-  // Confirmar a ordem: grava posição 1-6 de cada valor.
-  const confirmarOrdem = async () => {
-    if (!sessionId) return;
-    setFinalizing(true);
-    for (let i = 0; i < ordem.length; i++) {
-      await supabase
-        .from('wv_answers')
-        .upsert({ session_id: sessionId, item_cod: ordem[i].cod, posicao: i + 1 });
-    }
-    setStage('conclusion');
-    await handleComplete();
-  };
-
   const handleComplete = async () => {
     if (!sessionId || !user) return;
 
@@ -302,6 +289,19 @@ export default function QuestionarioWorkValues() {
     setProximoTesteCode(proximo?.code ?? null);
     setAllTestsDone(todos);
     setFinalizing(false);
+  };
+
+  // Confirmar a ordem: grava posição 1-6 de cada valor.
+  const confirmarOrdem = async () => {
+    if (!sessionId) return;
+    setFinalizing(true);
+    for (let i = 0; i < ordem.length; i++) {
+      await supabase
+        .from('wv_answers')
+        .upsert({ session_id: sessionId, item_cod: ordem[i].cod, posicao: i + 1 });
+    }
+    setStage('conclusion');
+    await handleComplete();
   };
 
   const irParaProximoTeste = () => {
