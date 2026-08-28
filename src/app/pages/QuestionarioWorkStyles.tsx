@@ -362,7 +362,7 @@ export default function QuestionarioWorkStyles() {
           {stage === 'intro1' && (
             <div className="flex items-center justify-center min-h-[70vh]">
               <div className="bg-[#1E293B] rounded-xl p-10 max-w-2xl w-full">
-                <h2 className="text-2xl font-bold text-white mb-6">Como preferes trabalhar</h2>
+                <h2 className="text-2xl font-bold text-white mb-6">Como gostarias de trabalhar</h2>
                 <p className="text-base text-[#F1F5F9] leading-relaxed mb-6">
                   Vais ver 16 formas de trabalhar. Para cada uma, indica o quanto se parece contigo.
                   Não há respostas certas ou erradas — responde com sinceridade.
