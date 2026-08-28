@@ -214,14 +214,6 @@ export default function QuestionarioWorkStyles() {
       .upsert({ session_id: sessionId, item_cod: itemCod, answer: value });
   };
 
-  const completedRef = useRef(false);
-  useEffect(() => {
-    if (stage === 'conclusion' && !completedRef.current) {
-      completedRef.current = true;
-      handleComplete();
-    }
-  }, [stage]);
-
   const handleComplete = async () => {
     if (!sessionId || !user) return;
     setFinalizing(true);
@@ -271,6 +263,14 @@ export default function QuestionarioWorkStyles() {
     setAllTestsDone(todos);
     setFinalizing(false);
   };
+
+  const completedRef = useRef(false);
+  useEffect(() => {
+    if (stage === 'conclusion' && !completedRef.current) {
+      completedRef.current = true;
+      handleComplete();
+    }
+  }, [stage]);
 
   const irParaProximoTeste = () => {
     if (!proximoTesteCode) {
