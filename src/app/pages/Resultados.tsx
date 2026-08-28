@@ -582,7 +582,17 @@ export default function Resultados() {
           });
           setMymentorMap(mmMap);
           setOccDetailMap(detailMap);
-          const top10Escos = top50Escos.slice(0, 10);
+          // As profissões mostradas passam pelo mesmo crivo das áreas: só entram as
+          // que têm área formativa (cnaef_unico válido). Sem isto apareciam no topo
+          // profissões que não contam para área nenhuma, e a lista não batia certo
+          // com os itinerários.
+          const temArea = (e: string) => {
+            const c = detailMap[e]?.cnaef_unico;
+            if (!c) return false;
+            const n = parseInt(String(c).trim(), 10);
+            return Number.isFinite(n) && n > 0;
+          };
+          const top10Escos = top50Escos.filter(temArea).slice(0, 10);
           setTopOccupations(
             top10Escos
               .filter((e) => nameMap[e])
@@ -1002,13 +1012,6 @@ export default function Resultados() {
     );
   };
 
-  // Determina se o resultado é do 9.º ano ANTES de qualquer retorno condicional.
-  // Esta variável é usada também no resultado sintético; se for declarada apenas
-  // mais abaixo, o JavaScript entra na temporal dead zone (TDZ) e lança
-  // "Cannot access ... before initialization", deixando a página em branco.
-  const cch = result.cch_area_scores;
-  const isNinthYear = !!cch && Object.keys(cch).length > 0;
-
   if (result.nivel === "sintetico") {
     const riasecRows = Object.entries(result.riasec_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
     const intelRows = Object.entries(result.intel_scores).sort((a, b) => Number(b[1]) - Number(a[1]));
@@ -1111,6 +1114,8 @@ export default function Resultados() {
 
   // ─── Vista do 9.º ano (3.º ciclo): áreas do Secundário ───────────────────
   // O backend só preenche cch_area_scores para alunos do 3.º ciclo.
+  const cch = result.cch_area_scores;
+  const isNinthYear = !!cch && Object.keys(cch).length > 0;
 
   if (isNinthYear) {
     const cchScores = cch as Record<string, number>;
@@ -1947,10 +1952,10 @@ export default function Resultados() {
           </div>
         </section>
 
-        {/* Como gostarias de trabalhar (Work Styles) — só quando há dados */}
+        {/* Como gostas de trabalhar (Work Styles) — só quando há dados */}
         {result.ws_scores && Object.keys(result.ws_scores).length > 0 && (
           <section id="sec-estilos" data-idx-label="Estilo de trabalho" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">Como gostarias de trabalhar</h2>
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">Como gostas de trabalhar</h2>
             {/* Gráfico: os 3 estilos mais altos da pessoa */}
             <div className="space-y-3 mb-6 max-w-xl">
               {Object.entries(result.ws_scores)
@@ -1974,10 +1979,10 @@ export default function Resultados() {
           </section>
         )}
 
-        {/* O que seria importante para ti num futuro trabalho (Work Values) — só quando há dados */}
+        {/* O que valorizas no trabalho (Work Values) — só quando há dados */}
         {result.wv_ordem && result.wv_ordem.length > 0 && (
           <section id="sec-valores" data-idx-label="Valores" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">O que seria importante para ti num futuro trabalho</h2>
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">O que valorizas no trabalho</h2>
             {/* Os 3 valores que a pessoa pôs em primeiro */}
             <div className="space-y-3 mb-6 max-w-xl">
               {result.wv_ordem.slice(0, 3).map((campo, i) => (
