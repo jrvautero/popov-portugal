@@ -16,6 +16,10 @@ interface PersonalityItem {
 const rotaTeste = (code: string) =>
   code.startsWith('personalidade')
     ? `/app/questionario-personalidade?teste=${encodeURIComponent(code)}`
+    : code.startsWith('work_styles')
+    ? `/app/questionario-estilos?teste=${encodeURIComponent(code)}`
+    : code.startsWith('work_values')
+    ? `/app/questionario-valores?teste=${encodeURIComponent(code)}`
     : `/app/questionario?teste=${encodeURIComponent(code)}`;
 
 const likertOptions = [
@@ -121,6 +125,8 @@ export default function QuestionarioPersonalidade() {
         await supabase.from('interest_answers').delete().eq('session_id', currentSessionId);
         await supabase.from('intelligence_answers').delete().eq('session_id', currentSessionId);
         await supabase.from('personality_responses').delete().eq('session_id', currentSessionId);
+        await supabase.from('ws_answers').delete().eq('session_id', currentSessionId);
+        await supabase.from('wv_answers').delete().eq('session_id', currentSessionId);
         setAnswers({});
 
         await supabase
