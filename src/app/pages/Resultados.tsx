@@ -1980,56 +1980,16 @@ export default function Resultados() {
           </div>
         </section>
 
-        {/* Como gostarias de trabalhar (Work Styles) — só quando há dados */}
-        {result.ws_scores && Object.keys(result.ws_scores).length > 0 && (
-          <section id="sec-estilos" data-idx-label="Estilo de trabalho" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">Como gostarias de trabalhar</h2>
-            {/* Gráfico: os 3 estilos mais altos da pessoa */}
-            <div className="space-y-3 mb-6 max-w-xl">
-              {Object.entries(result.ws_scores)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 3)
-                .map(([campo, val]) => (
-                  <div key={campo}>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm text-[#F1F5F9]">{WS_NOMES[campo] ?? campo}</span>
-                      <span className="text-sm font-semibold text-[#2BA88C]">{Math.round((val / 5) * 100)}%</span>
-                    </div>
-                    <div className="w-full h-2.5 bg-[#334155] rounded-full overflow-hidden">
-                      <div className="h-full bg-[#2BA88C] rounded-full" style={{ width: `${(val / 5) * 100}%` }} />
-                    </div>
-                  </div>
-                ))}
-            </div>
-            {result.ws_sintese && (
-              <p className="text-base text-[#CBD5E1] leading-relaxed">{result.ws_sintese}</p>
-            )}
-          </section>
-        )}
-
-        {/* O que seria importante para ti num futuro trabalho (Work Values) — só quando há dados */}
-        {result.wv_ordem && result.wv_ordem.length > 0 && (
-          <section id="sec-valores" data-idx-label="Valores" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
-            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">O que seria importante para ti num futuro trabalho</h2>
-            {/* Os 3 valores que a pessoa pôs em primeiro */}
-            <div className="space-y-3 mb-6 max-w-xl">
-              {result.wv_ordem.slice(0, 3).map((campo, i) => (
-                <div key={campo} className="flex items-center gap-4 bg-[#0F172A] border border-[#334155] rounded-lg p-4">
-                  <span className="w-8 h-8 rounded-full bg-[#2BA88C] text-white text-sm font-bold flex items-center justify-center shrink-0">
-                    {i + 1}
-                  </span>
-                  <span className="text-base text-[#F1F5F9] font-medium">{WV_NOMES[campo] ?? campo}</span>
-                </div>
-              ))}
-            </div>
-            {result.wv_sintese && (
-              <p className="text-base text-[#CBD5E1] leading-relaxed">{result.wv_sintese}</p>
-            )}
-          </section>
-        )}
+        {/* Personalidade — logo a seguir aos interesses */}
+        {secaoPersonalidade(true)}
 
         {/* Inteligências — Pontos Fortes e Desafios */}
         <section id="sec-inteligencias" data-idx-label="Pontos fortes" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+          <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">As tuas inteligências</h2>
+          <p className="text-sm text-[#94A3B8] mb-6">
+            Todos temos formas diferentes de aprender e de resolver problemas. Aqui vês
+            aquelas em que te destacas mais e aquelas com que te identificas menos.
+          </p>
           <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
 
             {/* Coluna esquerda — títulos descritivos */}
@@ -2166,6 +2126,54 @@ export default function Resultados() {
             );
           })()}
         </section>
+
+        {/* Como gostarias de trabalhar (Work Styles) — só quando há dados */}
+        {result.ws_scores && Object.keys(result.ws_scores).length > 0 && (
+          <section id="sec-estilos" data-idx-label="Estilo de trabalho" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">Como gostarias de trabalhar</h2>
+            {/* Gráfico: os 3 estilos mais altos da pessoa */}
+            <div className="space-y-3 mb-6 max-w-xl">
+              {Object.entries(result.ws_scores)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([campo, val]) => (
+                  <div key={campo}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm text-[#F1F5F9]">{WS_NOMES[campo] ?? campo}</span>
+                      <span className="text-sm font-semibold text-[#2BA88C]">{Math.round((val / 5) * 100)}%</span>
+                    </div>
+                    <div className="w-full h-2.5 bg-[#334155] rounded-full overflow-hidden">
+                      <div className="h-full bg-[#2BA88C] rounded-full" style={{ width: `${(val / 5) * 100}%` }} />
+                    </div>
+                  </div>
+                ))}
+            </div>
+            {result.ws_sintese && (
+              <p className="text-base text-[#CBD5E1] leading-relaxed">{result.ws_sintese}</p>
+            )}
+          </section>
+        )}
+
+        {/* O que seria importante para ti num futuro trabalho (Work Values) — só quando há dados */}
+        {result.wv_ordem && result.wv_ordem.length > 0 && (
+          <section id="sec-valores" data-idx-label="Valores" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-6">O que seria importante para ti num futuro trabalho</h2>
+            {/* Os 3 valores que a pessoa pôs em primeiro */}
+            <div className="space-y-3 mb-6 max-w-xl">
+              {result.wv_ordem.slice(0, 3).map((campo, i) => (
+                <div key={campo} className="flex items-center gap-4 bg-[#0F172A] border border-[#334155] rounded-lg p-4">
+                  <span className="w-8 h-8 rounded-full bg-[#2BA88C] text-white text-sm font-bold flex items-center justify-center shrink-0">
+                    {i + 1}
+                  </span>
+                  <span className="text-base text-[#F1F5F9] font-medium">{WV_NOMES[campo] ?? campo}</span>
+                </div>
+              ))}
+            </div>
+            {result.wv_sintese && (
+              <p className="text-base text-[#CBD5E1] leading-relaxed">{result.wv_sintese}</p>
+            )}
+          </section>
+        )}
 
         {/* Itinerários Profissionais */}
         {Object.keys(areaNameMapRef.current).length > 0 && (() => {
@@ -2809,7 +2817,6 @@ export default function Resultados() {
           </div>
         </section>
 
-        {secaoPersonalidade(true)}
       </main>
         </div>
       </div>
