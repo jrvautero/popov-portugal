@@ -1020,16 +1020,6 @@ export default function Resultados() {
             </div>
           ))}
 
-          {sintesePersonalidade && (
-            <div className="mt-8 border-t border-[#334155] pt-6 max-w-4xl">
-              <h3 className="text-lg font-semibold text-[#F1F5F9] mb-3">Síntese</h3>
-              {sintesePersonalidade.split("\n\n").map((para, i) => (
-                <p key={i} className="text-base text-[#F1F5F9] leading-relaxed mb-4">
-                  {para}
-                </p>
-              ))}
-            </div>
-          )}
         </div>
       </section>
     );
@@ -2816,6 +2806,25 @@ export default function Resultados() {
             )}
           </div>
         </section>
+
+        {/* Síntese — secção própria, a seguir à recomendação (ordem do Jaisso).
+            Antes vinha dentro da personalidade; foi separada para ficar no fim. */}
+        {sintesePersonalidade && (
+          <section id="sec-sintese" data-idx-label="Síntese" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">
+            <h2 className="text-2xl font-bold text-[#F1F5F9] mb-2">Síntese</h2>
+            <p className="text-sm text-[#94A3B8] mb-6">
+              Uma leitura de conjunto: o que os teus resultados dizem quando são vistos todos juntos.
+            </p>
+            <div className="max-w-4xl">
+              {sintesePersonalidade.split("\n\n").map((para, i) => (
+                <p key={i} className="text-base text-[#F1F5F9] leading-relaxed mb-4">
+                  {para}
+                </p>
+              ))}
+            </div>
+          </section>
+        )}
+
 
       </main>
         </div>
