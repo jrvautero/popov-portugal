@@ -959,10 +959,9 @@ export default function Resultados() {
   const secaoPersonalidade = (completo: boolean, nono = false) => {
     const ps = result.personality_scores;
     if (!ps || Object.keys(ps).length === 0) return null;
-    // No 9.º ano: nomes fáceis, percentagem sem rótulo. No 12.º: como estava.
-    const nomes = nono
-      ? { E: "Extroversão", A: "Amabilidade", C: "Organização (Conscienciosidade)", N: "Nervosismo (Neuroticismo)", I: "Curiosidade (Abertura)" }
-      : { E: "Extroversão", A: "Amabilidade", C: "Conscienciosidade", N: "Neuroticismo", I: "Intelecto / Abertura" };
+    // Nomes fáceis com o termo técnico entre parênteses, nos dois anos.
+    // (Antes o 12.º ficava só com os termos técnicos; foi corrigido por ordem do Jaisso.)
+    const nomes = { E: "Extroversão", A: "Amabilidade", C: "Organização (Conscienciosidade)", N: "Nervosismo (Neuroticismo)", I: "Curiosidade (Abertura)" };
     const nomeFator = (f: string) => nomes[f as keyof typeof nomes] ?? FATOR_NOMES[f];
     const ordenado = FATOR_ORDEM
       .filter((f) => ps[f])
