@@ -574,10 +574,14 @@ export default function Resultados() {
           const mmMap: Record<string, string | null> = {};
           const detailMap: Record<string, OccDetail> = {};
           (occData as (OccupationRow & { mymentor?: string | null; cnaef_unico?: string | null; isco_4dig?: string | null; name_profissao?: string | null })[]).forEach((o) => {
-            nameMap[o.esco] = o.prof;
+            // TESTE (28/08): mostrar o nome-mãe também no 12.º ano, para avaliar.
+            // REVERSÍVEL: pôr USAR_NOME_MAE_12 = false volta ao nome completo (o.prof).
+            const USAR_NOME_MAE_12 = true;
+            const nomeMae = (o.name_profissao && o.name_profissao.trim()) ? o.name_profissao.trim() : "";
+            nameMap[o.esco] = USAR_NOME_MAE_12 && nomeMae ? nomeMae : o.prof;
             mmMap[o.esco] = o.mymentor ?? null;
             detailMap[o.esco] = {
-              prof: o.prof,
+              prof: USAR_NOME_MAE_12 && nomeMae ? nomeMae : o.prof,
               // Nome a mostrar ao aluno, vindo da base. Se estiver vazio, a profissão
               // foi marcada para retirar e não se mostra. Não afeta o cálculo.
               nameProfissao: (o.name_profissao && o.name_profissao.trim()) ? o.name_profissao.trim() : "",
