@@ -606,8 +606,23 @@ export default function Resultados() {
 
           // Collect unique isco_4dig from top 5 profs per each of the 3 areas for training lookup
           const areaNameMapCurrent = areaNameMapRef.current;
+
+          // Quantas profissões finais tem cada área (pelo 1.º dígito do cnaef).
+          const contaPorArea: Record<string, number> = {};
+          for (const occ of Object.values(detailMap)) {
+            if (!occ.cnaef_unico) continue;
+            const n2 = parseInt(String(occ.cnaef_unico).trim(), 10);
+            if (!Number.isFinite(n2)) continue;
+            const n1 = Math.floor(n2 / 100);
+            if (n1 > 0) contaPorArea[String(n1)] = (contaPorArea[String(n1)] ?? 0) + 1;
+          }
+
+          // Uma área só entra no top se tiver pelo menos MIN_PROF_AREA profissões.
+          // Sem isto, uma área com uma só profissão podia ficar em primeiro lugar.
+          const MIN_PROF_AREA = 3;
           const top3Cods = Object.entries(data.cnaef_n1_scores ?? {})
             .filter(([c]) => !!areaNameMapCurrent[c])
+            .filter(([c]) => (contaPorArea[c] ?? 0) >= MIN_PROF_AREA)
             .sort((a, b) => Number(b[1]) - Number(a[1]))
             .slice(0, 3)
             .map(([c]) => c);
@@ -622,12 +637,20 @@ export default function Resultados() {
             const n1 = Math.floor(n2 / 100);
             return n1 > 0 ? String(n1) : null;
           };
-          const top10Escos = top50Escos
+          // O topo mostra exatamente as profissões que as áreas mostram: as 5
+          // melhores de cada uma das 3 áreas. Sem corte próprio, para as duas
+          // listas nunca divergirem. Nomes repetidos são saltados (fica o de
+          // maior escore), porque o nome-mãe é partilhado por várias profissões.
+          const vistos = new Set<string>();
+          const top10Escos = top3Cods
+            .flatMap((cod) => top50Escos.filter((e) => areaDe(e) === cod).slice(0, 5))
+            .sort((a, b) => (occScores[b] ?? 0) - (occScores[a] ?? 0))
             .filter((e) => {
-              const a = areaDe(e);
-              return a != null && top3Cods.includes(a);
-            })
-            .slice(0, 10);
+              const nome = (detailMap[e]?.prof ?? "").trim().toLowerCase();
+              if (!nome || vistos.has(nome)) return false;
+              vistos.add(nome);
+              return true;
+            });
           setTopOccupations(
             top10Escos
               .filter((e) => nameMap[e])
@@ -2407,6 +2430,9 @@ export default function Resultados() {
                   }));
 
                 // Top 5 professions for this N1 block from occDetailMap
+                // Nomes repetidos são saltados: fica o de maior escore. O nome-mãe
+                // é do grupo ISCO, por isso várias profissões partilham-no.
+                const vistosArea = new Set<string>();
                 const profsForBlock = Object.entries(occDetailMap)
                   .filter(([, occ]) => {
                     if (!occ.cnaef_unico) return false;
@@ -2414,6 +2440,12 @@ export default function Resultados() {
                     return !isNaN(n2) && Math.floor(n2 / 100) === parseInt(cod, 10);
                   })
                   .sort((a, b) => b[1].score - a[1].score)
+                  .filter(([, occ]) => {
+                    const nome = (occ.prof ?? "").trim().toLowerCase();
+                    if (!nome || vistosArea.has(nome)) return false;
+                    vistosArea.add(nome);
+                    return true;
+                  })
                   .slice(0, 5);
 
                 return (
