@@ -1168,10 +1168,30 @@ export default function Resultados() {
   const strengths = Array.isArray(result.top_strengths) ? result.top_strengths : [];
   const challenges = Array.isArray(result.top_challenges) ? result.top_challenges : [];
 
-  const top3Areas = Array.isArray(result.top3_areas) ? result.top3_areas : [];
   const cnaefN1Scores = result.cnaef_n1_scores ?? {};
   const cnaefScoreValues = Object.values(cnaefN1Scores).map(Number);
   const maxAreaScore = cnaefScoreValues.length > 0 ? Math.max(...cnaefScoreValues) : 1;
+
+  // ─── LISTA ÚNICA DAS ÁREAS DE TOPO (secundário) ──────────────────────────
+  // Fonte única para o cabeçalho, o detalhe das áreas, os valores e o
+  // "Escolhe o teu caminho". Antes havia quatro cálculos separados sem o
+  // filtro do mínimo de profissões, e uma área com uma só profissão aparecia
+  // em primeiro lugar enquanto as listas mostravam outras.
+  const MIN_PROF_AREA = 3;
+  const contaPorAreaRender: Record<string, number> = {};
+  for (const occ of Object.values(occDetailMap)) {
+    if (!occ.cnaef_unico) continue;
+    const n2 = parseInt(String(occ.cnaef_unico).trim(), 10);
+    if (!Number.isFinite(n2)) continue;
+    const n1 = Math.floor(n2 / 100);
+    if (n1 > 0) contaPorAreaRender[String(n1)] = (contaPorAreaRender[String(n1)] ?? 0) + 1;
+  }
+  const codigosTop3 = Object.entries(cnaefN1Scores)
+    .filter(([cod]) => !!areaNameMapRef.current[cod])
+    .filter(([cod]) => (contaPorAreaRender[cod] ?? 0) >= MIN_PROF_AREA)
+    .sort((a, b) => Number(b[1]) - Number(a[1]))
+    .slice(0, 3)
+    .map(([cod]) => cod);
 
   // ─── Vista do 9.º ano (3.º ciclo): áreas do Secundário ───────────────────
   // O backend só preenche cch_area_scores para alunos do 3.º ciclo.
@@ -1922,11 +1942,11 @@ export default function Resultados() {
               </span>
             )}
           </h1>
-          {top3Areas.length > 0 && (
+          {codigosTop3.length > 0 && (
             <p className="text-[#94A3B8] text-sm pt-1">
               Áreas formativas com maior afinidade:{" "}
               <span className="text-[#F1F5F9]">
-                {top3Areas
+                {codigosTop3
                   .map((cod) => areaNameMapRef.current[String(cod)] ?? String(cod))
                   .join(" | ")}
               </span>
@@ -2298,10 +2318,8 @@ export default function Resultados() {
                       Itinerários Destacados
                     </h4>
                     <div className="space-y-2">
-                      {Object.entries(cnaefN1Scores)
-                        .filter(([cod]) => !!areaNameMapRef.current[cod])
-                        .sort((a, b) => Number(b[1]) - Number(a[1]))
-                        .slice(0, 3)
+                      {codigosTop3
+                        .map((cod) => [cod, cnaefN1Scores[cod] ?? 0] as [string, number])
                         .map(([cod, score]) => {
                           const name = areaNameMapRef.current[cod];
                           const pct = Math.round((Number(score) / maxAreaScore) * 100);
@@ -2432,10 +2450,9 @@ export default function Resultados() {
 
         {/* Detalhe das 3 áreas de afinidade */}
         {Object.keys(areaNameMapRef.current).length > 0 && (() => {
-          const derivedTop3 = Object.entries(cnaefN1Scores)
-            .filter(([cod]) => !!areaNameMapRef.current[cod])
-            .sort((a, b) => Number(b[1]) - Number(a[1]))
-            .slice(0, 3);
+          const derivedTop3: Array<[string, number]> = codigosTop3.map(
+            (cod) => [cod, Number(cnaefN1Scores[cod] ?? 0)] as [string, number],
+          );
 
           if (derivedTop3.length === 0) return null;
 
@@ -2600,23 +2617,29 @@ export default function Resultados() {
         {/* O que seria importante para ti — segunda aparição, ligada às profissões.
             Só usa profissões já mostradas nas áreas destacadas; não inventa nenhuma. */}
         {result.wv_ordem && result.wv_ordem.length > 0 && Object.keys(areaNameMapRef.current).length > 0 && (() => {
-          const top3 = Object.entries(cnaefN1Scores)
-            .filter(([cod]) => !!areaNameMapRef.current[cod])
-            .sort((a, b) => Number(b[1]) - Number(a[1]))
-            .slice(0, 3)
-            .map(([cod]) => cod);
+          const top3 = codigosTop3;
           if (top3.length === 0) return null;
 
-          // As mesmas profissões que aparecem nas áreas: as 5 melhores de cada uma.
-          const daArea = (cod: string) =>
-            Object.entries(occDetailMap)
+          // As mesmas profissões que aparecem nas áreas: as 5 melhores de cada
+          // uma, com nomes repetidos saltados, para a lista bater com a das áreas.
+          const daArea = (cod: string) => {
+            const vistosArea = new Set<string>();
+            return Object.entries(occDetailMap)
               .filter(([, occ]) => {
                 if (!occ.cnaef_unico) return false;
                 const n2 = parseInt(occ.cnaef_unico, 10);
                 return !isNaN(n2) && Math.floor(n2 / 100) === parseInt(cod, 10);
               })
               .sort((a, b) => b[1].score - a[1].score)
+              .filter(([, occ]) => {
+                const nome = String(occ.prof ?? "").trim().toLowerCase();
+                if (!nome) return true;
+                if (vistosArea.has(nome)) return false;
+                vistosArea.add(nome);
+                return true;
+              })
               .slice(0, 5);
+          };
           const mostradas = top3.flatMap((cod) => daArea(cod));
 
           return (
@@ -2700,10 +2723,9 @@ export default function Resultados() {
 
         {/* Escolhe o teu caminho */}
         {Object.keys(areaNameMapRef.current).length > 0 && (() => {
-          const derivedTop3 = Object.entries(cnaefN1Scores)
-            .filter(([cod]) => !!areaNameMapRef.current[cod])
-            .sort((a, b) => Number(b[1]) - Number(a[1]))
-            .slice(0, 3);
+          const derivedTop3: Array<[string, number]> = codigosTop3.map(
+            (cod) => [cod, Number(cnaefN1Scores[cod] ?? 0)] as [string, number],
+          );
 
           if (derivedTop3.length === 0) return null;
 
@@ -2728,7 +2750,11 @@ export default function Resultados() {
                     const areaPct = Math.round((Number(areaScore) / maxAreaScore) * 100);
                     const n1 = parseInt(cod, 10);
 
-                    // Top 5 professions for this N1 area
+                    // Top 5 professions for this N1 area.
+                    // Nomes repetidos são saltados (fica o de maior escore),
+                    // porque o nome-mãe é partilhado por várias profissões e a
+                    // mesma designação aparecia duas vezes na mesma área.
+                    const vistosArea = new Set<string>();
                     const profs = Object.entries(occDetailMap)
                       .filter(([, occ]) => {
                         if (!occ.cnaef_unico) return false;
@@ -2736,6 +2762,13 @@ export default function Resultados() {
                         return !isNaN(n2) && Math.floor(n2 / 100) === n1;
                       })
                       .sort((a, b) => b[1].score - a[1].score)
+                      .filter(([, occ]) => {
+                        const nome = String(occ.prof ?? "").trim().toLowerCase();
+                        if (!nome) return true;
+                        if (vistosArea.has(nome)) return false;
+                        vistosArea.add(nome);
+                        return true;
+                      })
                       .slice(0, 5);
 
                     const profMaxScore = profs.length > 0 ? profs[0][1].score : 1;
