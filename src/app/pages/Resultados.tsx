@@ -223,6 +223,9 @@ interface ResultData {
   ws_scores?: Record<string, number> | null;
   wv_ordem?: string[] | null;
   ws_sintese?: string | null;
+  // Preenchido quando o aluno refez algum teste depois do último cálculo.
+  // Enquanto tiver valor, o relatório mostrado não reflete as respostas novas.
+  respostas_alteradas_em?: string | null;
   wv_sintese?: string | null;
 }
 
@@ -353,6 +356,7 @@ export default function Resultados() {
   const [sintesePersonalidade, setSintesePersonalidade] = useState<string>("");
   const areaNameMapRef = useRef<Record<string, string>>({});
   const [recalculating, setRecalculating] = useState(false);
+  const [recalcErro, setRecalcErro] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [saldoCreditos, setSaldoCreditos] = useState<number | null>(null);
@@ -728,18 +732,29 @@ export default function Resultados() {
   async function handleRecalculate() {
     if (!result) return;
     setRecalculating(true);
+    setRecalcErro(null);
     try {
-      const { error: fnError } = await supabase.functions.invoke("calculate_results", {
-        body: { session_id: result.session_id, modo: "recalcular" },
+      // Se houve respostas novas, o recálculo é uma geração nova e cobra
+      // 1 crédito. Sem isso, o aluno mudava o resultado de graça, refazendo
+      // um teste de cada vez. Sem respostas novas, é só regenerar: não cobra.
+      const houveRespostasNovas = !!result.respostas_alteradas_em;
+      const { data, error: fnError } = await supabase.functions.invoke("calculate_results", {
+        body: {
+          session_id: result.session_id,
+          modo: houveRespostasNovas && result.nivel === "completo" ? "desbloquear" : "recalcular",
+        },
       });
-      if (fnError) {
-        console.error("Erro ao recalcular:", fnError);
-        alert("Erro ao recalcular resultados.");
-      } else {
-        setOrientadorText("");
-        setErrorOrientador(null);
-        await loadResults();
+      if (fnError || !data?.ok) {
+        setRecalcErro("Não foi possível recalcular agora. Tenta novamente.");
+        return;
       }
+      if (data.necessita_credito) {
+        setRecalcErro("Não tens créditos suficientes para recalcular o relatório completo.");
+        return;
+      }
+      setOrientadorText("");
+      setErrorOrientador(null);
+      await loadResults();
     } finally {
       setRecalculating(false);
     }
@@ -1918,6 +1933,27 @@ export default function Resultados() {
             </p>
           )}
         </section>
+
+        {/* Aviso: respondeu de novo a algum teste e ainda não recalculou.
+            O relatório abaixo é o anterior; não reflete as respostas novas. */}
+        {result.respostas_alteradas_em && (
+          <section className="bg-[#1E293B] border border-[#E0A33E] rounded-xl p-6">
+            <h2 className="text-lg font-semibold text-[#F1F5F9] mb-2">Este relatório não está atualizado</h2>
+            <p className="text-sm text-[#CBD5E1] leading-relaxed mb-4">
+              Respondeste de novo a pelo menos um teste depois deste relatório ter sido
+              gerado. O que vês abaixo é o resultado anterior. Para o atualizares com as
+              tuas respostas novas, recalcula{result.nivel === "completo" ? ", o que custa 1 crédito" : ""}.
+            </p>
+            <button
+              onClick={handleRecalculate}
+              disabled={recalculating}
+              className="px-5 py-2 bg-[#2BA88C] text-white rounded-lg text-sm font-medium hover:bg-[#259178] transition-colors disabled:opacity-60"
+            >
+              {recalculating ? "A recalcular..." : "Recalcular agora"}
+            </button>
+            {recalcErro && <p className="text-red-400 text-sm mt-3">{recalcErro}</p>}
+          </section>
+        )}
 
         {/* RIASEC */}
         <section id="sec-interesses" data-idx-label="Interesses" className="bg-[#1E293B] rounded-xl p-8 scroll-mt-24">

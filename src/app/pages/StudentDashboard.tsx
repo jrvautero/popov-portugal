@@ -166,6 +166,65 @@ export default function StudentDashboard() {
     new Date(dateString).toLocaleDateString('pt-PT');
 
   // Abre um teste concreto (passa o code para o questionário correr só esse).
+  // Refazer a bateria toda: apaga as respostas dos cinco testes e repõe todos
+  // a "por fazer". O relatório antigo é arquivado e fica marcado como
+  // desatualizado; o recálculo é que consome 1 crédito.
+  const executarRefazerTudo = async () => {
+    if (!user) return;
+    setARefazerTudo(true);
+    try {
+      const { data: sessions } = await supabase
+        .from('assessment_sessions')
+        .select('id')
+        .eq('student_id', user.id)
+        .order('started_at', { ascending: false })
+        .limit(1);
+      const sid = sessions?.[0]?.id;
+      if (!sid) { setARefazerTudo(false); setRefazerTudo(false); return; }
+
+      // Guarda o relatório atual no histórico antes de as respostas irem.
+      await supabase.rpc('arquivar_resultado', { p_session: sid });
+
+      for (const tabela of ['interest_answers','intelligence_answers','personality_responses','ws_answers','wv_answers']) {
+        await supabase.from(tabela).delete().eq('session_id', sid);
+      }
+
+      await supabase
+        .from('results')
+        .update({ respostas_alteradas_em: new Date().toISOString() })
+        .eq('session_id', sid);
+
+      await supabase
+        .from('assessment_sessions')
+        .update({ status: 'in_progress', completed_at: null })
+        .eq('id', sid);
+
+      const ano = anoAlvoFromEdu(profile?.education_level ?? '');
+      const { data: catalogo } = await supabase
+        .from('tests')
+        .select('id')
+        .eq('ano_alvo', ano)
+        .eq('ativo', true);
+      for (const t of (catalogo || []) as { id: string }[]) {
+        await supabase.from('test_progress').upsert(
+          {
+            user_id: user.id,
+            test_id: t.id,
+            session_id: sid,
+            estado: 'a_meio',
+            iniciado_em: new Date().toISOString(),
+            concluido_em: null,
+          },
+          { onConflict: 'user_id,test_id' }
+        );
+      }
+      window.location.reload();
+    } finally {
+      setARefazerTudo(false);
+      setRefazerTudo(false);
+    }
+  };
+
   const abrirTeste = (code: string) => {
     navigate(
       code.startsWith('personalidade')
@@ -181,6 +240,9 @@ export default function StudentDashboard() {
   // Ao clicar num teste: se está concluído, é um REFAZER -> pede confirmação
   // (avisa que apaga o resultado anterior e cobra 1 crédito). Senão, abre direto.
   const [refazerCode, setRefazerCode] = useState<string | null>(null);
+  // Refazer a bateria toda: apaga as respostas dos cinco testes.
+  const [refazerTudo, setRefazerTudo] = useState(false);
+  const [aRefazerTudo, setARefazerTudo] = useState(false);
   const [menuAberto, setMenuAberto] = useState(false);
   const temCompleto = nivelResultado === 'completo';
 
@@ -451,6 +513,17 @@ export default function StudentDashboard() {
                 </div>
               )}
 
+              {tests.some((t) => t.estado !== 'por_fazer') && (
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setRefazerTudo(true)}
+                    className="px-4 py-2 bg-transparent border border-[#334155] text-[#94A3B8] rounded-lg text-sm font-medium hover:border-[#475569] hover:text-[#F1F5F9] transition-colors"
+                  >
+                    Refazer todos os testes
+                  </button>
+                </div>
+              )}
+
               {todosConcluidos && (
                 <div className="mt-6 bg-[#1E293B] border border-[#2BA88C] rounded-lg p-5">
                   <p className="text-white mb-3">Concluíste todos os testes. Já podes ver os teus resultados.</p>
@@ -530,9 +603,10 @@ export default function StudentDashboard() {
           <div className="bg-[#1E293B] rounded-xl p-8 max-w-md w-full">
             <h3 className="text-xl font-bold text-white mb-4">Refazer este teste?</h3>
             <p className="text-[#F1F5F9] mb-6 leading-relaxed">
-              {temCompleto
-                ? 'Vais responder de novo a este teste. O teu relatório completo atual será apagado e, para gerares um novo relatório completo, será cobrado 1 crédito.'
-                : 'Vais responder de novo a este teste. Quando gerares o relatório completo, será cobrado 1 crédito.'}
+              Vais responder de novo só a este teste. As respostas dos outros
+              testes mantêm-se. O teu relatório atual continua disponível, mas
+              deixa de estar atualizado: para o recalcular com as respostas
+              novas, será cobrado 1 crédito.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -550,6 +624,35 @@ export default function StudentDashboard() {
                 className="px-4 py-2 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors"
               >
                 Refazer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL: confirmar refazer TODOS os testes */}
+      {refazerTudo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E293B] rounded-xl p-8 max-w-md w-full">
+            <h3 className="text-xl font-bold text-white mb-4">Refazer todos os testes?</h3>
+            <p className="text-[#F1F5F9] mb-6 leading-relaxed">
+              Vais apagar as respostas de todos os testes e começar do início. O
+              teu relatório atual continua disponível, mas deixa de estar
+              atualizado: para o recalcular no fim, será cobrado 1 crédito.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setRefazerTudo(false)}
+                disabled={aRefazerTudo}
+                className="px-4 py-2 bg-[#334155] text-white rounded-lg font-medium hover:bg-[#475569] transition-colors disabled:opacity-60"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={executarRefazerTudo}
+                disabled={aRefazerTudo}
+                className="px-4 py-2 bg-[#2BA88C] text-white rounded-lg font-medium hover:bg-[#259178] transition-colors disabled:opacity-60"
+              >
+                {aRefazerTudo ? 'A apagar...' : 'Refazer tudo'}
               </button>
             </div>
           </div>

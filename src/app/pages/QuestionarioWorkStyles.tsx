@@ -115,48 +115,36 @@ export default function QuestionarioWorkStyles() {
         estaConcluido = prog?.estado === 'concluido';
       }
 
-      // 4. REFAZER: reabrir um teste concluído reinicia a bateria inteira.
+      // 4. REFAZER (ordem do Jaisso, 01/09): reabrir este teste apaga SÓ as
+      //    respostas dele. Os outros testes ficam intactos. O relatório antigo
+      //    continua visível, marcado como desatualizado; o recálculo é que
+      //    consome 1 crédito.
       if (estaConcluido && resolvedTestId) {
-        await supabase.rpc('arquivar_resultado', { p_session: currentSessionId });
-
-        await supabase.from('interest_answers').delete().eq('session_id', currentSessionId);
-        await supabase.from('intelligence_answers').delete().eq('session_id', currentSessionId);
-        await supabase.from('personality_responses').delete().eq('session_id', currentSessionId);
         await supabase.from('ws_answers').delete().eq('session_id', currentSessionId);
-        await supabase.from('wv_answers').delete().eq('session_id', currentSessionId);
         setAnswers({});
+
+        // Marca o resultado como desatualizado (não o apaga).
+        await supabase
+          .from('results')
+          .update({ respostas_alteradas_em: new Date().toISOString() })
+          .eq('session_id', currentSessionId);
 
         await supabase
           .from('assessment_sessions')
           .update({ status: 'in_progress', completed_at: null })
           .eq('id', currentSessionId);
 
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('education_level')
-          .eq('id', user.id)
-          .single();
-        const eduR = (prof?.education_level ?? '').toLowerCase();
-        const anoR =
-          eduR.includes('3.º ciclo') || eduR.includes('3º ciclo') || eduR.includes('básico') ? 9 : 12;
-        const { data: catR } = await supabase
-          .from('tests')
-          .select('id')
-          .eq('ano_alvo', anoR)
-          .eq('ativo', true);
-        for (const t of (catR || []) as { id: string }[]) {
-          await supabase.from('test_progress').upsert(
-            {
-              user_id: user.id,
-              test_id: t.id,
-              session_id: currentSessionId,
-              estado: 'a_meio',
-              iniciado_em: new Date().toISOString(),
-              concluido_em: null,
-            },
-            { onConflict: 'user_id,test_id' }
-          );
-        }
+        await supabase.from('test_progress').upsert(
+          {
+            user_id: user.id,
+            test_id: resolvedTestId,
+            session_id: currentSessionId,
+            estado: 'a_meio',
+            iniciado_em: new Date().toISOString(),
+            concluido_em: null,
+          },
+          { onConflict: 'user_id,test_id' }
+        );
       } else if (resolvedTestId) {
         await supabase.from('test_progress').upsert(
           {
